@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root{color-scheme:dark}
+body{@apply bg-neutral-950 text-neutral-200 antialiased}
+.bg-field{background-image:radial-gradient(transparent 1px,rgba(255,255,255,0.04) 1px),radial-gradient(transparent 1px,rgba(255,255,255,0.02) 1px);background-size:28px 28px,14px 14px;background-position:0 0,7px 7px}
+.vignette::after{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 30%,rgba(0,0,0,0.45) 100%)}
+.card{@apply rounded-xl border border-neutral-800/70 bg-neutral-900/40;box-shadow:0 1px 0 rgba(255,255,255,0.06) inset,0 20px 40px rgba(0,0,0,0.35)}
+.card-gold{@apply rounded-xl border border-gold/40 bg-neutral-900/40;box-shadow:0 0 0 1px rgba(231,200,115,0.25) inset,0 18px 36px rgba(231,200,115,0.08)}
+.link{@apply text-gold hover:opacity-90 transition}
