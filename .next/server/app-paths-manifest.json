@@ -1,8 +1,0 @@
-{
-  "/page": "app/page.js",
-  "/music-numerology/page": "app/music-numerology/page.js",
-  "/codex/page": "app/codex/page.js",
-  "/about/page": "app/about/page.js",
-  "/blueprint/page": "app/blueprint/page.js",
-  "/bridge/page": "app/bridge/page.js"
-}
