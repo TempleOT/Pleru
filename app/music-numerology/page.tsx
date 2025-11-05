@@ -425,7 +425,6 @@ export default function MusicNumerologyPage() {
 
     if (!timeBufRef.current) timeBufRef.current = new Float32Array(analyser.fftSize);
     analyser.getFloatTimeDomainData(timeBufRef.current as Float32Array);
-);
 
     const lin = new Float32Array(N);
     for (let i = 0; i < N; i++) {
