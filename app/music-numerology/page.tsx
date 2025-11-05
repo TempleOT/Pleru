@@ -604,7 +604,8 @@ export default function MusicNumerologyPage() {
     if (!timeBufRef.current) {
       timeBufRef.current = new Float32Array(analyser.fftSize);
     }
-    const tdBuf = timeBufRef.current;
+
+    const tdBuf = timeBufRef.current as Float32Array;
     analyser.getFloatTimeDomainData(tdBuf);
 
     // dB -> linear
