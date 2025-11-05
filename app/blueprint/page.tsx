@@ -195,7 +195,6 @@ export default function BlueprintPage() {
       });
 
       const details =
-        // @ts-expect-error api may include numerology.details
         (data?.numerology as any)?.details as
           | Array<{ key: string; label: string; value: string; reading: string }>
           | undefined;
