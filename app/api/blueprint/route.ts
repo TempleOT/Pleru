@@ -75,7 +75,6 @@ function buildOut({
       summary:
         modelJson.numerology?.summary ??
         "Mind map: Life Path sets the road; Expression builds the bridge; Soul Urge fuels the heart; Personality shapes first contact; Maturity blends Life Path + Expression into seasoned purpose.",
-      ...(details.length ? { details } : {}), // only include if we have any
     },
     humanDesign:
       modelJson.humanDesign ?? {
