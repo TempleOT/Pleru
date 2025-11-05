@@ -255,11 +255,8 @@ export default function BlueprintPage() {
         } else {
           // graceful fallback if divine fails
           setDivineIdentity({
-            // @ts-expect-error optional
             sun: data?.divineIdentity?.sun ?? "—",
-            // @ts-expect-error optional
             moon: data?.divineIdentity?.moon ?? "—",
-            // @ts-expect-error optional
             rising: data?.divineIdentity?.rising ?? "—",
             role:
               data?.divineIdentity?.summary ??
@@ -271,11 +268,8 @@ export default function BlueprintPage() {
       } else {
         // Couldn’t geocode — keep prior behavior
         setDivineIdentity({
-          // @ts-expect-error optional
           sun: data?.divineIdentity?.sun ?? "—",
-          // @ts-expect-error optional
           moon: data?.divineIdentity?.moon ?? "—",
-          // @ts-expect-error optional
           rising: data?.divineIdentity?.rising ?? "—",
           role:
             data?.divineIdentity?.summary ??
