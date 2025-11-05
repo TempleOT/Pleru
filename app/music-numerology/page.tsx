@@ -72,10 +72,10 @@ function topKPeaks(arr: Uint8Array, K: number, minDistance: number, noiseFloor =
   return out;
 }
 function spectralFlatnessLinear(binsLin: Float32Array, startIdx = 0, endIdx?: number) {
-  const hi = endIdx ?? (binsLin.length - 1);
+  const hi = endIdx ?? binsLin.length - 1;
   const N = Math.max(1, hi - startIdx + 1);
-  let geo = 0,
-    arith = 0;
+  let geo = 0;
+  let arith = 0;
   for (let i = startIdx; i <= hi; i++) {
     const v = Math.max(binsLin[i], 1e-8);
     geo += Math.log(v);
@@ -86,16 +86,16 @@ function spectralFlatnessLinear(binsLin: Float32Array, startIdx = 0, endIdx?: nu
   return gmean / Math.max(amean, 1e-8);
 }
 function parabolicInterp(mags: Float32Array | Uint8Array, i: number) {
-  const L = mags.length,
-    i0 = Math.max(0, Math.min(L - 1, i));
-  const im1 = Math.max(0, i0 - 1),
-    ip1 = Math.min(L - 1, i0 + 1);
-  const ym1 = (mags as any)[im1],
-    y0 = (mags as any)[i0],
-    yp1 = (mags as any)[ip1];
+  const L = mags.length;
+  const i0 = Math.max(0, Math.min(L - 1, i));
+  const im1 = Math.max(0, i0 - 1);
+  const ip1 = Math.min(L - 1, i0 + 1);
+  const ym1 = (mags as any)[im1];
+  const y0 = (mags as any)[i0];
+  const yp1 = (mags as any)[ip1];
   const denom = ym1 - 2 * y0 + yp1;
   if (denom === 0) return i0;
-  const delta = 0.5 * (ym1 - yp1) / denom;
+  const delta = (0.5 * (ym1 - yp1)) / denom;
   return i0 + clamp(delta, -1, 1);
 }
 
@@ -367,7 +367,9 @@ export default function MusicNumerologyPage() {
       freezeRef.current = false;
       try {
         await ctxRef.current?.resume();
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     };
     const onPause = async () => {
       freezeRef.current = true;
@@ -375,7 +377,9 @@ export default function MusicNumerologyPage() {
       timeBufRef.current = null;
       try {
         await ctxRef.current?.suspend();
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     };
     const onEnded = () => {
       freezeRef.current = true;
@@ -398,33 +402,85 @@ export default function MusicNumerologyPage() {
     if (!ctxRef.current)
       ctxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
 
+    // 1) load worklet module (string)
     if (!workletRef.current) {
       const code = `
       class BassYINProcessor extends AudioWorkletProcessor {
-        constructor(){ super(); this._buf=new Float32Array(8192); this._w=0; this._hop=2048; this._acc=0; this._thr=0.10; }
-        _yin(frame,sr){
-          const L=frame.length, maxLag=Math.floor(sr/${BASS_LOW_HZ}), minLag=Math.max(2,Math.floor(sr/${BASS_HIGH_HZ}));
-          const tauMax=Math.min(maxLag, Math.floor(L*0.5)-1);
-          const d=new Float32Array(tauMax+1), cmnd=new Float32Array(tauMax+1);
-          for(let tau=1;tau<=tauMax;tau++){ let sum=0; for(let i=0;i<L-tau;i++){ const diff=frame[i]-frame[i+tau]; sum+=diff*diff; } d[tau]=sum; }
-          let run=0; for(let tau=1;tau<=tauMax;tau++){ run+=d[tau]; cmnd[tau]= (run/tau)? d[tau]/(run/tau) : 1; }
-          let tau=-1; for(let t=minLag;t<=tauMax;t++){ if(cmnd[t]<this._thr){ tau=t; break; } }
-          if(tau===-1){ let best=minLag, v=cmnd[minLag]; for(let t=minLag+1;t<=tauMax;t++){ if(cmnd[t]<v){ v=cmnd[t]; best=t; } } tau=best; }
-          const x0=tau<=1?tau:tau-1, x2=tau+1<=tauMax?tau+1:tau; const s0=cmnd[x0], s1=cmnd[tau], s2=cmnd[x2];
-          const a=s0-2*s1+s2, b=0.5*(s2-s0); const tauR=a===0?tau: tau - b/(2*a);
-          const f0=sampleRate/tauR, conf=Math.max(0, Math.min(1, 1-cmnd[tau]));
-          return {f0, conf};
+        constructor(){
+          super();
+          this._buf = new Float32Array(8192);
+          this._w = 0;
+          this._hop = 2048;
+          this._acc = 0;
+          this._thr = 0.10;
+        }
+        _yin(frame, sr){
+          const L = frame.length;
+          const maxLag = Math.floor(sr/${BASS_LOW_HZ});
+          const minLag = Math.max(2, Math.floor(sr/${BASS_HIGH_HZ}));
+          const tauMax = Math.min(maxLag, Math.floor(L*0.5)-1);
+          const d = new Float32Array(tauMax+1);
+          const cmnd = new Float32Array(tauMax+1);
+          for (let tau=1; tau<=tauMax; tau++){
+            let sum=0;
+            for (let i=0; i<L-tau; i++){
+              const diff = frame[i]-frame[i+tau];
+              sum += diff*diff;
+            }
+            d[tau] = sum;
+          }
+          let run = 0;
+          for (let tau=1; tau<=tauMax; tau++){
+            run += d[tau];
+            cmnd[tau] = (run/tau) ? d[tau]/(run/tau) : 1;
+          }
+          let tau = -1;
+          for (let t=minLag; t<=tauMax; t++){
+            if (cmnd[t] < this._thr){ tau = t; break; }
+          }
+          if (tau === -1){
+            let best = minLag;
+            let v = cmnd[minLag];
+            for (let t=minLag+1; t<=tauMax; t++){
+              if (cmnd[t] < v){ v = cmnd[t]; best = t; }
+            }
+            tau = best;
+          }
+          const x0 = tau <= 1 ? tau : tau - 1;
+          const x2 = tau + 1 <= tauMax ? tau + 1 : tau;
+          const s0 = cmnd[x0], s1 = cmnd[tau], s2 = cmnd[x2];
+          const a = s0 - 2*s1 + s2;
+          const b = 0.5*(s2 - s0);
+          const tauR = a === 0 ? tau : tau - b/(2*a);
+          const f0 = sampleRate / tauR;
+          const conf = Math.max(0, Math.min(1, 1 - cmnd[tau]));
+          return { f0, conf };
         }
         process(inputs){
-          const ch=(inputs[0]&&inputs[0][0])||null; if(!ch) return true;
-          const N=ch.length; for(let i=0;i<N;i++){ this._buf[this._w]=ch[i]; this._w=(this._w+1)%this._buf.length; }
-          this._acc+=N; if(this._acc>=this._hop){ this._acc=0;
-            const win=4096; if(win<this._buf.length){
-              const frame=new Float32Array(win); let idx=(this._w-win+this._buf.length)%this._buf.length;
-              for(let i=0;i<win;i++){ frame[i]=ch[(idx+i)%ch.length]; }
-              for(let i=0;i<win;i++){ frame[i]*=0.5*(1-Math.cos((2*Math.PI*i)/(win-1))); }
-              const {f0,conf}=this._yin(frame,sampleRate);
-              if(isFinite(f0)&&f0>${BASS_LOW_HZ - 5}&&f0<${BASS_HIGH_HZ + 20}) this.port.postMessage({type:"bass",f0,conf});
+          const ch = (inputs[0] && inputs[0][0]) || null;
+          if (!ch) return true;
+          const N = ch.length;
+          for (let i=0; i<N; i++){
+            this._buf[this._w] = ch[i];
+            this._w = (this._w + 1) % this._buf.length;
+          }
+          this._acc += N;
+          if (this._acc >= this._hop){
+            this._acc = 0;
+            const win = 4096;
+            if (win < this._buf.length){
+              const frame = new Float32Array(win);
+              let idx = (this._w - win + this._buf.length) % this._buf.length;
+              for (let i=0; i<win; i++){
+                frame[i] = this._buf[(idx + i) % this._buf.length];
+              }
+              for (let i=0; i<win; i++){
+                frame[i] *= 0.5*(1 - Math.cos((2*Math.PI*i)/(win-1)));
+              }
+              const { f0, conf } = this._yin(frame, sampleRate);
+              if (isFinite(f0) && f0 > ${BASS_LOW_HZ - 5} && f0 < ${BASS_HIGH_HZ + 20}){
+                this.port.postMessage({ type: "bass", f0, conf });
+              }
             }
           }
           return true;
@@ -438,6 +494,7 @@ export default function MusicNumerologyPage() {
       URL.revokeObjectURL(url);
     }
 
+    // 2) normal audio graph
     if (!sourceRef.current)
       sourceRef.current = ctxRef.current.createMediaElementSource(audioRef.current!);
 
@@ -466,6 +523,7 @@ export default function MusicNumerologyPage() {
     merger.connect(analyserRef.current);
     analyserRef.current.connect(ctxRef.current.destination);
 
+    // 3) create the worklet node (muted) and listen for bass
     if (!workletRef.current) {
       const n = new AudioWorkletNode(ctxRef.current, "bass-yin-processor", {
         numberOfInputs: 1,
@@ -518,7 +576,9 @@ export default function MusicNumerologyPage() {
     }
   }
 
-  // -------------- THIS IS THE PART WE FIXED --------------
+  // ─────────────────────────────────────────────────────────
+  // FIXED: readHarmBand
+  // ─────────────────────────────────────────────────────────
   function readHarmBand(
     ctx: AudioContext,
     analyser: AnalyserNode,
@@ -530,6 +590,7 @@ export default function MusicNumerologyPage() {
     const N = analyser.frequencyBinCount;
     const binsDb = new Float32Array(N);
     const binsU8 = new Uint8Array(N);
+
     analyser.getFloatFrequencyData(binsDb);
     analyser.getByteFrequencyData(binsU8);
 
@@ -537,21 +598,22 @@ export default function MusicNumerologyPage() {
     if (!timeBufRef.current) {
       timeBufRef.current = new Float32Array(analyser.fftSize);
     }
-    analyser.getFloatTimeDomainData(
-      timeBufRef.current as unknown as Float32Array
-    );
+    analyser.getFloatTimeDomainData(timeBufRef.current as unknown as Float32Array);
 
+    // dB -> linear
     const lin = new Float32Array(N);
     for (let i = 0; i < N; i++) {
       const v = Math.pow(10, binsDb[i] / 20);
       lin[i] = isFinite(v) ? Math.max(v, 1e-8) : 1e-8;
     }
 
+    // band limits
     const nyq = ctx.sampleRate / 2;
     const binHz = nyq / N;
     const cutL = Math.max(0, Math.floor(lowHz / binHz));
     const cutH = Math.min(N - 1, Math.floor(highHz / binHz));
 
+    // spectral flux inside band
     let flux = 0;
     if (prevMagRef.current && prevMagRef.current.length === N) {
       for (let i = cutL; i <= cutH; i++) {
@@ -561,31 +623,24 @@ export default function MusicNumerologyPage() {
     }
     prevMagRef.current = lin.slice(0);
 
+    // flatness inside band
     const flat = spectralFlatnessLinear(lin, cutL, cutH);
 
+    // percussive gate
     const isPercussive = flux > 5e-3 && flat > FLATNESS_GATE;
-    if (isPercussive)
-      return {
-        freq: 0,
-        midi: null,
-        note: "-",
-        digit: null,
-        cents: 0,
-        conf: 0,
-      };
+    if (isPercussive) {
+      return { freq: 0, midi: null, note: "-", digit: null, cents: 0, conf: 0 };
+    }
 
+    // zero out outside band for peak search
     for (let i = 0; i < Math.min(cutL, N); i++) binsU8[i] = 0;
     for (let i = cutH + 1; i < N; i++) binsU8[i] = 0;
 
-    const peaks = topKPeaks(
-      binsU8,
-      HARMONIC_PEAKS,
-      HARMONIC_MIN_DIST_BINS,
-      NOISE_FLOOR_U8
-    );
-    let fLead = 0,
-      leadW = -1,
-      peakVote: Record<number, number> = {};
+    // peaks
+    const peaks = topKPeaks(binsU8, HARMONIC_PEAKS, HARMONIC_MIN_DIST_BINS, NOISE_FLOOR_U8);
+    let fLead = 0;
+    let leadW = -1;
+    const peakVote: Record<number, number> = {};
     if (peaks.length) {
       const maxVal = Math.max(...peaks.map((i) => binsU8[i]), 1);
       for (const i of peaks) {
@@ -603,8 +658,11 @@ export default function MusicNumerologyPage() {
       }
     }
 
+    // smooth fundamental
     emaRef.current = ema(emaRef.current, fLead, SMOOTH_ALPHA);
     const fSm = emaRef.current ?? fLead;
+
+    // snap to midi
     const snapped = snapFreqToNearestMidi(fSm, A4);
     const midiSnap = snapped.midi;
     const noteSnap = midiToNoteName(midiSnap);
@@ -612,6 +670,7 @@ export default function MusicNumerologyPage() {
     const digitSnap = pcSnap != null ? pitchClassToDigit(pcSnap) : null;
     const confSnap = snapConfidence(snapped.cents);
 
+    // chroma vote
     const chroma = new Array(12).fill(0);
     for (let i = cutL; i <= cutH; i++) {
       const f = binToFreq(i, ctx.sampleRate, N);
@@ -621,15 +680,15 @@ export default function MusicNumerologyPage() {
       const w = lin[i];
       const pc0 = Math.floor(pc);
       const frac = pc - pc0;
-      const left = (pc0 + 11) % 12,
-        right = (pc0 + 1) % 12;
+      const left = (pc0 + 11) % 12;
+      const right = (pc0 + 1) % 12;
       chroma[pc0] += (1 - Math.abs(frac)) * w;
-      chroma[right] += Math.max(0, frac) * w * 0.5;
-      chroma[left] += Math.max(0, -frac) * w * 0.5;
+      if (frac > 0) chroma[right] += frac * w * 0.5;
+      if (frac < 0) chroma[left] += -frac * w * 0.5;
     }
     const chromaNorm = Math.hypot(...chroma);
-    let pcChroma = null as number | null,
-      confChroma = 0;
+    let pcChroma: number | null = null;
+    let confChroma = 0;
     if (chromaNorm > 0) {
       const maxV = Math.max(...chroma);
       pcChroma = chroma.indexOf(maxV);
@@ -637,40 +696,40 @@ export default function MusicNumerologyPage() {
     }
     const digitChroma = pcChroma != null ? pitchClassToDigit(pcChroma) : null;
 
+    // ACF confidence from time-domain
     let confAcf = 0;
     if (timeBufRef.current) {
       const td = timeBufRef.current;
       const minLag = Math.floor(ctx.sampleRate / 1200);
       const maxLag = Math.floor(ctx.sampleRate / 200);
-      let bestLag = -1,
-        best = -Infinity,
-        next = -Infinity;
+      let bestLag = -1;
+      let best = -Infinity;
+      let next = -Infinity;
       for (let lag = minLag; lag <= maxLag; lag++) {
         let sum = 0;
-        for (let i = 0; i < td.length - lag; i++) sum += td[i] * td[i + lag];
+        for (let i = 0; i < td.length - lag; i++) {
+          sum += td[i] * td[i + lag];
+        }
         if (sum > best) {
           next = best;
           best = sum;
           bestLag = lag;
-        } else if (sum > next) next = sum;
+        } else if (sum > next) {
+          next = sum;
+        }
       }
       if (bestLag > 0) {
         const f0 = ctx.sampleRate / bestLag;
         const snapA = snapFreqToNearestMidi(f0, A4);
-        const confLocal = Math.max(
-          0,
-          (best - Math.max(1e-9, next)) / Math.max(1e-9, best)
-        );
+        const confLocal = Math.max(0, (best - Math.max(1e-9, next)) / Math.max(1e-9, best));
         confAcf = confLocal * snapConfidence(snapA.cents);
       }
     }
 
+    // combine votes
     let wSnap = confSnap;
     let wChroma = confChroma;
-    const agree =
-      digitSnap != null &&
-      digitChroma != null &&
-      digitSnap === digitChroma;
+    const agree = digitSnap != null && digitChroma != null && digitSnap === digitChroma;
     if (agree) {
       wSnap *= 1.2;
       wChroma *= 1.2;
@@ -679,11 +738,13 @@ export default function MusicNumerologyPage() {
     wSnap *= wBoost;
     wChroma *= wBoost;
 
-    let digit: number | null = null,
-      conf = 0;
     if (digitSnap == null && digitChroma == null) {
       return { freq: fSm, midi: null, note: "-", digit: null, cents: 0, conf: 0 };
-    } else if (digitSnap != null && (wSnap >= wChroma || digitChroma == null)) {
+    }
+
+    let digit: number | null;
+    let conf: number;
+    if (digitSnap != null && (wSnap >= wChroma || digitChroma == null)) {
       digit = digitSnap;
       conf = clamp(wSnap, 0, 1);
     } else {
@@ -700,7 +761,6 @@ export default function MusicNumerologyPage() {
       conf,
     };
   }
-  // -------------- END OF FIXED PART --------------
 
   function tick() {
     if (freezeRef.current || !analyzingRef.current) {
@@ -741,8 +801,7 @@ export default function MusicNumerologyPage() {
       }));
       setEmbodimentCounts((prev) => ({
         ...prev,
-        [rLow.digit!]:
-          (prev[rLow.digit!] ?? 0) + (rLow as any).conf * wLow,
+        [rLow.digit!]: (prev[rLow.digit!] ?? 0) + (rLow as any).conf * wLow,
       }));
     }
     if (rMid.digit) {
@@ -763,8 +822,7 @@ export default function MusicNumerologyPage() {
       }));
       setEmbodimentCounts((prev) => ({
         ...prev,
-        [rMid.digit!]:
-          (prev[rMid.digit!] ?? 0) + (rMid as any).conf * wMid,
+        [rMid.digit!]: (prev[rMid.digit!] ?? 0) + (rMid as any).conf * wMid,
       }));
     }
     if (rHigh.digit) {
@@ -785,8 +843,7 @@ export default function MusicNumerologyPage() {
       }));
       setEmbodimentCounts((prev) => ({
         ...prev,
-        [rHigh.digit!]:
-          (prev[rHigh.digit!] ?? 0) + (rHigh as any).conf * wHigh,
+        [rHigh.digit!]: (prev[rHigh.digit!] ?? 0) + (rHigh as any).conf * wHigh,
       }));
     }
 
@@ -896,12 +953,9 @@ export default function MusicNumerologyPage() {
       </div>
 
       <main className="px-4 py-8 max-w-6xl mx-auto">
-        <h2 className="text-lg font-medium text-yellow-500">
-          Multi-Band Readers + Embodiment
-        </h2>
+        <h2 className="text-lg font-medium text-yellow-500">Multi-Band Readers + Embodiment</h2>
         <p className="text-sm text-neutral-500 mt-1">
-          Low/ Mid/ High harmonic bands each vote their digit; Embodiment blends
-          them (and optionally some Bass).
+          Low/ Mid/ High harmonic bands each vote their digit; Embodiment blends them (and optionally some Bass).
         </p>
 
         {/* Controls */}
@@ -914,9 +968,7 @@ export default function MusicNumerologyPage() {
               onChange={onFile}
               className="mt-2 block w-full text-sm"
             />
-            <div className="mt-2 text-xs text-neutral-400">
-              {fileName || "No file selected"}
-            </div>
+            <div className="mt-2 text-xs text-neutral-400">{fileName || "No file selected"}</div>
             <audio ref={audioRef} controls className="mt-3 w-full" />
 
             <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -968,7 +1020,7 @@ export default function MusicNumerologyPage() {
             <div className="mt-3 grid gap-2">
               <div className="text-xs text-neutral-400">Embodiment Weights</div>
               <label className="inline-flex items-center gap-2 text-xs text-neutral-300">
-                Low (Body):{" "}
+                Low (Body):
                 <input
                   type="range"
                   min={0}
@@ -977,12 +1029,10 @@ export default function MusicNumerologyPage() {
                   value={wLow}
                   onChange={(e) => setWLow(Number(e.target.value))}
                 />
-                <span className="font-mono">
-                  {Math.round(wLow * 100)}%
-                </span>
+                <span className="font-mono">{Math.round(wLow * 100)}%</span>
               </label>
               <label className="inline-flex items-center gap-2 text-xs text-neutral-300">
-                Mid (Voice):{" "}
+                Mid (Voice):
                 <input
                   type="range"
                   min={0}
@@ -991,12 +1041,10 @@ export default function MusicNumerologyPage() {
                   value={wMid}
                   onChange={(e) => setWMid(Number(e.target.value))}
                 />
-                <span className="font-mono">
-                  {Math.round(wMid * 100)}%
-                </span>
+                <span className="font-mono">{Math.round(wMid * 100)}%</span>
               </label>
               <label className="inline-flex items-center gap-2 text-xs text-neutral-300">
-                High (Air):{" "}
+                High (Air):
                 <input
                   type="range"
                   min={0}
@@ -1005,12 +1053,10 @@ export default function MusicNumerologyPage() {
                   value={wHigh}
                   onChange={(e) => setWHigh(Number(e.target.value))}
                 />
-                <span className="font-mono">
-                  {Math.round(wHigh * 100)}%
-                </span>
+                <span className="font-mono">{Math.round(wHigh * 100)}%</span>
               </label>
               <label className="inline-flex items-center gap-2 text-xs text-neutral-300">
-                Bass share into Embodiment:{" "}
+                Bass share into Embodiment:
                 <input
                   type="range"
                   min={0}
@@ -1019,17 +1065,14 @@ export default function MusicNumerologyPage() {
                   value={wBass}
                   onChange={(e) => setWBass(Number(e.target.value))}
                 />
-                <span className="font-mono">
-                  {Math.round(wBass * 100)}%
-                </span>
+                <span className="font-mono">{Math.round(wBass * 100)}%</span>
               </label>
             </div>
 
             <div className="mt-2 text-xs text-neutral-400">
               Key:{" "}
               <b>
-                {NOTE_NAMES[keyInfo.tonicPC]}{" "}
-                {keyInfo.mode === "maj" ? "(maj)" : "(min)"}
+                {NOTE_NAMES[keyInfo.tonicPC]} {keyInfo.mode === "maj" ? "(maj)" : "(min)"}
               </b>{" "}
               · Conf: {Math.round(keyInfo.confidence)}%
             </div>
@@ -1042,9 +1085,7 @@ export default function MusicNumerologyPage() {
             <div className="text-sm opacity-80">Live Readout</div>
             <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
               <div className="rounded-lg border border-neutral-800 p-3 bg-neutral-950">
-                <div className="opacity-60 text-xs">
-                  Low Harmonic (Body) Freq
-                </div>
+                <div className="opacity-60 text-xs">Low Harmonic (Body) Freq</div>
                 <div className="font-mono mt-1">
                   {liveLow?.freq ? `${liveLow.freq.toFixed(1)} Hz` : "-"}
                 </div>
@@ -1053,16 +1094,12 @@ export default function MusicNumerologyPage() {
                 <div className="opacity-60 text-xs">Low Note</div>
                 <div className="font-mono mt-1">
                   {liveLow?.midi ?? "-"} / {liveLow?.note ?? "-"}
-                  {typeof liveLow?.cents === "number"
-                    ? ` (${fmtCents(liveLow.cents!)})`
-                    : ""}
+                  {typeof liveLow?.cents === "number" ? ` (${fmtCents(liveLow.cents!)})` : ""}
                 </div>
               </div>
 
               <div className="rounded-lg border border-neutral-800 p-3 bg-neutral-950">
-                <div className="opacity-60 text-xs">
-                  Mid Harmonic (Voice) Freq
-                </div>
+                <div className="opacity-60 text-xs">Mid Harmonic (Voice) Freq</div>
                 <div className="font-mono mt-1">
                   {liveMid?.freq ? `${liveMid.freq.toFixed(1)} Hz` : "-"}
                 </div>
@@ -1071,16 +1108,12 @@ export default function MusicNumerologyPage() {
                 <div className="opacity-60 text-xs">Mid Note</div>
                 <div className="font-mono mt-1">
                   {liveMid?.midi ?? "-"} / {liveMid?.note ?? "-"}
-                  {typeof liveMid?.cents === "number"
-                    ? ` (${fmtCents(liveMid.cents!)})`
-                    : ""}
+                  {typeof liveMid?.cents === "number" ? ` (${fmtCents(liveMid.cents!)})` : ""}
                 </div>
               </div>
 
               <div className="rounded-lg border border-neutral-800 p-3 bg-neutral-950">
-                <div className="opacity-60 text-xs">
-                  High Harmonic (Air) Freq
-                </div>
+                <div className="opacity-60 text-xs">High Harmonic (Air) Freq</div>
                 <div className="font-mono mt-1">
                   {liveHigh?.freq ? `${liveHigh.freq.toFixed(1)} Hz` : "-"}
                 </div>
@@ -1089,9 +1122,7 @@ export default function MusicNumerologyPage() {
                 <div className="opacity-60 text-xs">High Note</div>
                 <div className="font-mono mt-1">
                   {liveHigh?.midi ?? "-"} / {liveHigh?.note ?? "-"}
-                  {typeof liveHigh?.cents === "number"
-                    ? ` (${fmtCents(liveHigh.cents!)})`
-                    : ""}
+                  {typeof liveHigh?.cents === "number" ? ` (${fmtCents(liveHigh.cents!)})` : ""}
                 </div>
               </div>
 
@@ -1105,9 +1136,7 @@ export default function MusicNumerologyPage() {
                 <div className="opacity-60 text-xs">Bass Note</div>
                 <div className="font-mono mt-1">
                   {bassMidi ?? "-"} / {bassNote}
-                  {typeof bassCents === "number"
-                    ? ` (${fmtCents(bassCents)})`
-                    : ""}
+                  {typeof bassCents === "number" ? ` (${fmtCents(bassCents)})` : ""}
                 </div>
               </div>
 
@@ -1117,27 +1146,19 @@ export default function MusicNumerologyPage() {
                 </div>
                 <div className="font-mono mt-1">
                   {mainHarmonic.label}{" "}
-                  {mainHarmonic.label !== "-"
-                    ? `· ${mainHarmonic.confidence.toFixed(0)}%`
-                    : ""}
+                  {mainHarmonic.label !== "-" ? `· ${mainHarmonic.confidence.toFixed(0)}%` : ""}
                 </div>
               </div>
             </div>
 
             <div className="mt-3">
               <div className="flex items-center justify-between">
-                <div className="opacity-60 text-xs mb-1">
-                  Recent digits — Harmonics
-                </div>
+                <div className="opacity-60 text-xs mb-1">Recent digits — Harmonics</div>
                 <button
                   onClick={() => setExpandHarm((s) => !s)}
                   className="text-xs px-2 py-1 rounded border border-neutral-700 hover:bg-neutral-800 inline-flex items-center gap-1"
                 >
-                  {expandHarm ? (
-                    <ChevronUp className="h-3 w-3" />
-                  ) : (
-                    <ChevronDown className="h-3 w-3" />
-                  )}
+                  {expandHarm ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                   {expandHarm ? "Collapse" : "Expand"}
                 </button>
               </div>
@@ -1181,18 +1202,12 @@ export default function MusicNumerologyPage() {
               </div>
 
               <div className="flex items-center justify-between mt-3">
-                <div className="opacity-60 text-xs mb-1">
-                  Recent digits — Bass
-                </div>
+                <div className="opacity-60 text-xs mb-1">Recent digits — Bass</div>
                 <button
                   onClick={() => setExpandBass((s) => !s)}
                   className="text-xs px-2 py-1 rounded border border-neutral-700 hover:bg-neutral-800 inline-flex items-center gap-1"
                 >
-                  {expandBass ? (
-                    <ChevronUp className="h-3 w-3" />
-                  ) : (
-                    <ChevronDown className="h-3 w-3" />
-                  )}
+                  {expandBass ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                   {expandBass ? "Collapse" : "Expand"}
                 </button>
               </div>
@@ -1208,9 +1223,7 @@ export default function MusicNumerologyPage() {
                     {s.digit}
                   </span>
                 ))}
-                {recentB.length === 0 && (
-                  <span className="text-xs text-neutral-500">—</span>
-                )}
+                {recentB.length === 0 && <span className="text-xs text-neutral-500">—</span>}
               </div>
             </div>
           </div>
@@ -1218,33 +1231,23 @@ export default function MusicNumerologyPage() {
 
         <div className="mt-6 grid gap-3 md:grid-cols-2">
           <div className="rounded-xl border border-neutral-800 p-4 bg-neutral-900/60">
-            <div className="text-sm opacity-80 mb-3">
-              Body (200–500 Hz) — confidence-weighted
-            </div>
+            <div className="text-sm opacity-80 mb-3">Body (200–500 Hz) — confidence-weighted</div>
             <BandBars counts={lowCounts} />
           </div>
           <div className="rounded-xl border border-neutral-800 p-4 bg-neutral-900/60">
-            <div className="text-sm opacity-80 mb-3">
-              Voice (500–1500 Hz) — confidence-weighted
-            </div>
+            <div className="text-sm opacity-80 mb-3">Voice (500–1500 Hz) — confidence-weighted</div>
             <BandBars counts={midCounts} />
           </div>
           <div className="rounded-xl border border-neutral-800 p-4 bg-neutral-900/60">
-            <div className="text-sm opacity-80 mb-3">
-              Air (1500–6000 Hz) — confidence-weighted
-            </div>
+            <div className="text-sm opacity-80 mb-3">Air (1500–6000 Hz) — confidence-weighted</div>
             <BandBars counts={highCounts} />
           </div>
           <div className="rounded-xl border border-neutral-800 p-4 bg-neutral-900/60">
-            <div className="text-sm opacity-80 mb-3">
-              Bass (60–300 Hz) — confidence-weighted
-            </div>
+            <div className="text-sm opacity-80 mb-3">Bass (60–300 Hz) — confidence-weighted</div>
             <BandBars counts={bassCounts} />
           </div>
           <div className="rounded-xl border border-neutral-800 p-4 bg-neutral-900/60 md:col-span-2">
-            <div className="text-sm opacity-80 mb-3">
-              Embodiment (Low/Mid/High + Bass share)
-            </div>
+            <div className="text-sm opacity-80 mb-3">Embodiment (Low/Mid/High + Bass share)</div>
             <BandBars counts={embodimentCounts} />
           </div>
         </div>
@@ -1258,11 +1261,9 @@ export default function MusicNumerologyPage() {
         </div>
 
         <div className="mt-6 text-xs text-neutral-500">
-          Each harmonic reader applies: percussive gate, peak-snap, chroma, ACF
-          booster — but only within its band. Embodiment blends their votes with
-          your sliders and can include a portion of Bass. Key detection uses all
-          harmonic samples; “Main Note” aggregates across the last ~
-          {MAIN_NOTE_WINDOW} frames.
+          Each harmonic reader applies: percussive gate, peak-snap, chroma, ACF booster — but only within its band.
+          Embodiment blends their votes with your sliders and can include a portion of Bass. Key detection uses all
+          harmonic samples; “Main Note” aggregates across the last ~{MAIN_NOTE_WINDOW} frames.
         </div>
       </main>
     </Shell>
@@ -1276,19 +1277,13 @@ function BandBars({ counts }: { counts: Record<number, number> }) {
       {Object.entries(counts).map(([k, v]) => {
         const pct = max ? (Number(v) / max) * 100 : 0;
         return (
-          <div
-            key={`bar${k}`}
-            className="rounded-lg border border-neutral-800 p-3 bg-neutral-950"
-          >
+          <div key={`bar${k}`} className="rounded-lg border border-neutral-800 p-3 bg-neutral-950">
             <div className="flex items-center justify-between text-sm">
               <div className="font-semibold">#{k}</div>
               <div className="font-mono">{v.toFixed(1)}</div>
             </div>
             <div className="mt-2 h-2 w-full bg-neutral-800 rounded">
-              <div
-                className="h-2 bg-yellow-500 rounded"
-                style={{ width: `${pct}%` }}
-              />
+              <div className="h-2 bg-yellow-500 rounded" style={{ width: `${pct}%` }} />
             </div>
           </div>
         );
@@ -1304,9 +1299,7 @@ function MsgCard({ title, text, wide }: { title: string; text: string; wide?: bo
       }`}
     >
       <div className="text-sm opacity-80">{title}</div>
-      <pre className="mt-3 text-sm leading-relaxed whitespace-pre-wrap">
-        {text}
-      </pre>
+      <pre className="mt-3 text-sm leading-relaxed whitespace-pre-wrap">{text}</pre>
     </div>
   );
 }
