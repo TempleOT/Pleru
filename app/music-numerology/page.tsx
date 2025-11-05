@@ -342,12 +342,18 @@ export default function MusicNumerologyPage() {
     const counts: Record<number, number> = {};
     if (rotateToTonic && keyInfo.confidence > 5) {
       for (const pc of pcs) counts[(pc - tonic + 12) % 12] = (counts[(pc - tonic + 12) % 12] ?? 0) + 1;
-      const [rel, c] = Object.entries(counts).sort((a, b) => Number(b[1]) - Number(a[1]))[0] as [string, number];
+      const [rel, c] = Object.entries(counts).sort((a, b) => Number(b[1]) - Number(a[1]))[0] as [
+        string,
+        number
+      ];
       const finalPC = (Number(rel) + tonic) % 12;
       return { label: NOTE_NAMES[finalPC], confidence: (c / pcs.length) * 100 };
     } else {
       for (const pc of pcs) counts[pc] = (counts[pc] ?? 0) + 1;
-      const [pcTop, c] = Object.entries(counts).sort((a, b) => Number(b[1]) - Number(a[1]))[0] as [string, number];
+      const [pcTop, c] = Object.entries(counts).sort((a, b) => Number(b[1]) - Number(a[1]))[0] as [
+        string,
+        number
+      ];
       return { label: NOTE_NAMES[Number(pcTop)], confidence: (c / pcs.length) * 100 };
     }
   }, [allHarmSamples, rotateToTonic, keyInfo]);
@@ -598,7 +604,8 @@ export default function MusicNumerologyPage() {
     if (!timeBufRef.current) {
       timeBufRef.current = new Float32Array(analyser.fftSize);
     }
-    analyser.getFloatTimeDomainData(timeBufRef.current as unknown as Float32Array);
+    const tdBuf = timeBufRef.current;
+    analyser.getFloatTimeDomainData(tdBuf);
 
     // dB -> linear
     const lin = new Float32Array(N);
@@ -1141,9 +1148,7 @@ export default function MusicNumerologyPage() {
               </div>
 
               <div className="rounded-lg border border-neutral-800 p-3 bg-neutral-950 col-span-2">
-                <div className="opacity-60 text-xs">
-                  Main Note (harmonics aggregate, smoothed)
-                </div>
+                <div className="opacity-60 text-xs">Main Note (harmonics aggregate, smoothed)</div>
                 <div className="font-mono mt-1">
                   {mainHarmonic.label}{" "}
                   {mainHarmonic.label !== "-" ? `· ${mainHarmonic.confidence.toFixed(0)}%` : ""}
