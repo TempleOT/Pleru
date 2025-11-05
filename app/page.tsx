@@ -126,18 +126,30 @@ export default function Page() {
           </div>
         </Link>
 
-        {/* ⬇️ changed this part only */}
-        <Link href="/reflect" className="card hover:shadow-gold transition p-5 border border-neutral-800">
+        {/* Reflect */}
+        <Link
+          href="/reflect"
+          className="card hover:shadow-gold transition p-5 border border-neutral-800"
+        >
           <div className="text-lg font-medium text-gold mb-1">Reflect — Divine Identity</div>
           <div className="text-sm text-neutral-400">
             Enter your birth details and receive a Divine Identity reading.
           </div>
         </Link>
-        {/* ⬆️ changed this part only */}
+
+        {/* Alignment (new) */}
+        <Link href="/alignment" className="card hover:shadow-gold transition p-5">
+          <div className="text-lg font-medium">Alignment</div>
+          <div className="text-sm text-neutral-400">
+            Daily synchrony — today’s frequency pulse.
+          </div>
+        </Link>
 
         <Link href="/codex" className="card hover:shadow-gold transition p-5">
           <div className="text-lg font-medium">Codex</div>
-          <div className="text-sm text-neutral-400">Ego ↔ Essence entries and Temple Keys.</div>
+          <div className="text-sm text-neutral-400">
+            Ego ↔ Essence entries and Temple Keys.
+          </div>
         </Link>
       </div>
     </Shell>
