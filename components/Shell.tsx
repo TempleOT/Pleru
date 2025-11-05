@@ -22,10 +22,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Drawer + toggle button (top-right) */}
-      <SettingsPanel
-        triggerLabel="Pleru topics"
-        panelTitle="Pleru topics"
-      />
+      <SettingsPanel />
     </div>
   );
 }
