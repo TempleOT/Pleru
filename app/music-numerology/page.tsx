@@ -424,7 +424,8 @@ export default function MusicNumerologyPage() {
     analyser.getByteFrequencyData(binsU8);
 
     if (!timeBufRef.current) timeBufRef.current = new Float32Array(analyser.fftSize);
-    analyser.getFloatTimeDomainData(timeBufRef.current);
+    analyser.getFloatTimeDomainData(analyser.getFloatTimeDomainData(timeBufRef.current as unknown as Float32Array);
+);
 
     const lin = new Float32Array(N);
     for (let i = 0; i < N; i++) {
