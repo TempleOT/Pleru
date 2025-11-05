@@ -606,7 +606,7 @@ export default function MusicNumerologyPage() {
     }
 
     const tdBuf = timeBufRef.current as Float32Array;
-    analyser.getFloatTimeDomainData(tdBuf);
+    analyser.getFloatTimeDomainData(tdBuf as any);
 
     // dB -> linear
     const lin = new Float32Array(N);
