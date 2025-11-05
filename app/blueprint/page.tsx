@@ -203,9 +203,7 @@ export default function BlueprintPage() {
 
       // Human Design placeholder (unchanged)
       const hdNotes: string[] = [];
-      // @ts-expect-error optional fields from API
       if (data?.humanDesign?.type) hdNotes.push(`Type: ${(data as any).humanDesign.type}`);
-      // @ts-expect-error optional fields from API
       if (data?.humanDesign?.authority)
         hdNotes.push(`Authority: ${(data as any).humanDesign.authority}`);
 
