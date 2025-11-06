@@ -1,0 +1,9 @@
+{
+  "/page": "app/page.js",
+  "/blueprint/page": "app/blueprint/page.js",
+  "/about/page": "app/about/page.js",
+  "/codex/page": "app/codex/page.js",
+  "/alignment/page": "app/alignment/page.js",
+  "/reflect/page": "app/reflect/page.js",
+  "/bridge/page": "app/bridge/page.js"
+}

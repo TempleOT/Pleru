@@ -26,33 +26,6 @@ export default function Page() {
   const setNum = (k: keyof typeof form) => (e: any) =>
     setForm((f) => ({ ...f, [k]: Number(e.target.value) }));
 
-  // Convert local time (HH:MM) + timezone offset → UTC decimal hour
-  function toUtcDecimal(localTime: string, tzOffset: number): number {
-    const [h, m] = localTime.split(":").map(Number);
-    const localDecimal = h + m / 60;
-    return localDecimal - tzOffset;
-  }
-
-  // Fetch coordinates from location search
-  async function fetchCoords(place: string) {
-    try {
-      const r = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(place)}`
-      );
-      const data = await r.json();
-      if (data?.[0]) {
-        setForm((f) => ({
-          ...f,
-          lat: parseFloat(data[0].lat),
-          lon: parseFloat(data[0].lon),
-        }));
-      } else setErr("Location not found");
-    } catch (e) {
-      setErr("Failed to fetch location");
-    }
-  }
-
-  // ─── Compute + Interpret ───────────────────────────────
   async function compute() {
     setErr("");
     setReading("");
@@ -96,61 +69,73 @@ export default function Page() {
   // ─── UI ────────────────────────────────────────────────
   return (
     <Shell>
-      {/* Header */}
-      <div className="flex items-center gap-6">
-        <Image src="/ambient/logo.png" alt="Pleru" width={64} height={64} priority />
-        <div>
-          <h1 className="text-2xl font-semibold text-gold">Welcome to Pleru</h1>
-          <p className="text-neutral-400 mt-1">A quiet place to align with Essence.</p>
+      {/* Page container — centers content */}
+      <div className="max-w-5xl mx-auto px-4 lg:px-0">
+        {/* Header */}
+        <div className="flex items-center gap-6">
+          <Image src="/ambient/logo.png" alt="Pleru" width={64} height={64} priority />
+          <div>
+            <h1 className="text-2xl font-semibold text-gold">Welcome to Pleru</h1>
+            <p className="text-neutral-400 mt-1">A quiet place to align with Essence.</p>
+          </div>
         </div>
-      </div>
 
-      {/* Progress Flame */}
-      <div className="mt-8">
-        <ProgressFlame level={0.42} />
-      </div>
+        {/* Progress Flame */}
+        <div className="mt-9">
+          <ProgressFlame level={0.42} />
+        </div>
 
-      {/* Main Links */}
-      <div className="mt-10 grid gap-4">
-        <Link href="/blueprint" className="card hover:shadow-gold transition p-5">
-          <div className="text-lg font-medium">Blueprint</div>
-          <div className="text-sm text-neutral-400">
-            The app’s North Star — pillars, systems, tone.
-          </div>
-        </Link>
+        {/* Main Links */}
+        <div className="mt-10 grid gap-4">
+          <Link
+            href="/blueprint"
+            className="card hover:shadow-gold hover:-translate-y-[1px] transition p-5"
+          >
+            <div className="text-lg font-medium">Blueprint</div>
+            <div className="text-sm text-neutral-400">
+              The app’s North Star — pillars, systems, tone.
+            </div>
+          </Link>
 
-        <Link href="/bridge" className="card hover:shadow-gold transition p-5">
-          <div className="text-lg font-medium">Bridge</div>
-          <div className="text-sm text-neutral-400">
-            Translate your soul’s design into daily clarity.
-          </div>
-        </Link>
+          <Link
+            href="/bridge"
+            className="card hover:shadow-gold hover:-translate-y-[1px] transition p-5"
+          >
+            <div className="text-lg font-medium">Bridge</div>
+            <div className="text-sm text-neutral-400">
+              Translate your soul’s design into daily clarity.
+            </div>
+          </Link>
 
-        {/* Reflect */}
-        <Link
-          href="/reflect"
-          className="card hover:shadow-gold transition p-5 border border-neutral-800"
-        >
-          <div className="text-lg font-medium text-gold mb-1">Reflect — Divine Identity</div>
-          <div className="text-sm text-neutral-400">
-            Enter your birth details and receive a Divine Identity reading.
-          </div>
-        </Link>
+          {/* Reflect */}
+          <Link
+            href="/reflect"
+            className="card hover:shadow-gold hover:-translate-y-[1px] transition p-5"
+          >
+            <div className="text-lg font-medium">Reflect</div>
+          </Link>
 
-        {/* Alignment (new) */}
-        <Link href="/alignment" className="card hover:shadow-gold transition p-5">
-          <div className="text-lg font-medium">Alignment</div>
-          <div className="text-sm text-neutral-400">
-            Daily synchrony — today’s frequency pulse.
-          </div>
-        </Link>
+          {/* Alignment */}
+          <Link
+            href="/alignment"
+            className="card hover:shadow-gold hover:-translate-y-[1px] transition p-5"
+          >
+            <div className="text-lg font-medium">Alignment</div>
+            <div className="text-sm text-neutral-400">
+              Daily synchrony — today’s frequency pulse.
+            </div>
+          </Link>
 
-        <Link href="/codex" className="card hover:shadow-gold transition p-5">
-          <div className="text-lg font-medium">Codex</div>
-          <div className="text-sm text-neutral-400">
-            Ego ↔ Essence entries and Temple Keys.
-          </div>
-        </Link>
+          <Link
+            href="/codex"
+            className="card hover:shadow-gold hover:-translate-y-[1px] transition p-5"
+          >
+            <div className="text-lg font-medium">Codex</div>
+            <div className="text-sm text-neutral-400">
+              Ego ↔ Essence entries and Temple Keys.
+            </div>
+          </Link>
+        </div>
       </div>
     </Shell>
   );

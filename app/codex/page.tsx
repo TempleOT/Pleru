@@ -20,17 +20,96 @@ export type CodexEntry = {
   id: string;
   tier: 1 | 2 | 3 | 4 | 5;
   title: string;
-  subtitle?: string; // short poetic line under the title
+  subtitle?: string;
   ego: string;
   essence: string;
-  integrated?: string; // integrated key line
+  integrated?: string;
+};
+
+type Medicine = {
+  name: string;
+  center: string;
+  heals: string;
+  nature: string;
+  effect: string;
+  practice: string;
+  mantra: string;
 };
 
 // ───────────────────────────────────────────────────────────────
-// Seed data (examples). Replace/extend with your full Codex list.
+// Seven Medicines of Awakening (from your PDF, normalized)
+// ───────────────────────────────────────────────────────────────
+const MEDICINES: Medicine[] = [
+  {
+    name: "Presence — Medicine of Stillness",
+    center: "CROWN",
+    heals: "Pride, superiority, fragmentation.",
+    nature: "Silent awareness behind all forms.",
+    effect: "Dissolves comparison, unifies the field.",
+    practice: "Sit in unforced stillness; feel perception widen beyond identity.",
+    mantra: "“I am here; therefore I am whole.”",
+  },
+  {
+    name: "Clarity — Medicine of Insight",
+    center: "AJNA",
+    heals: "Delusion, confusion, mental noise.",
+    nature: "Seeing through appearance into pattern.",
+    effect: "Thoughts rearrange around truth; vision becomes guidance.",
+    practice: "Observe rather than interpret; let reality show itself.",
+    mantra: "“I see what is real, not what I fear.”",
+  },
+  {
+    name: "Truth — Medicine of Integrity",
+    center: "THROAT",
+    heals: "Lies, repression, false self-expression.",
+    nature: "Alignment of word and essence.",
+    effect: "Energy flows through speech; creativity ignites.",
+    practice: "Speak the small truths daily; the great truth reveals itself.",
+    mantra: "“My voice is the sound of my soul.”",
+  },
+  {
+    name: "Compassion — Medicine of Connection",
+    center: "HEART",
+    heals: "Grief, isolation, judgment.",
+    nature: "Boundless empathy without attachment.",
+    effect: "Softens duality, bridges self and other.",
+    practice: "Breathe into the heart until it feels wider than the body.",
+    mantra: "“All pain is love asking to be seen.”",
+  },
+  {
+    name: "Dignity — Medicine of Self-Worth",
+    center: "SOLAR",
+    heals: "Shame, self-doubt, inferiority.",
+    nature: "Quiet confidence rooted in being.",
+    effect: "Power returns to its rightful owner.",
+    practice: "Stand upright, feel the sun within the chest, act from inner authority.",
+    mantra: "“I am worthy of the light that moves me.”",
+  },
+  {
+    name: "Love — Medicine of Union",
+    center: "SACRAL",
+    heals: "Lust, craving, emotional hunger.",
+    nature: "Desire integrated with devotion.",
+    effect: "Relationships become mirrors, not escapes.",
+    practice: "When wanting arises, ask: “What am I truly longing for?”",
+    mantra: "“I choose union over possession.”",
+  },
+  {
+    name: "Courage — Medicine of Life-Force",
+    center: "ROOT",
+    heals: "Fear, inertia, survival panic.",
+    nature: "Action infused with trust.",
+    effect: "Stability in motion — body as temple.",
+    practice: "Ground; exhale longer than you inhale; move toward the honest task.",
+    mantra: "“Life moves through me, and I move with Life.”",
+  },
+];
+
+// ───────────────────────────────────────────────────────────────
+// Your original Codex entries
 // ───────────────────────────────────────────────────────────────
 const ENTRIES: CodexEntry[] = [
-  // ───────── Tier 1 — Gross Chains (1–10)
+  // Tier 1
   {
     id: "lust",
     tier: 1,
@@ -121,8 +200,7 @@ const ENTRIES: CodexEntry[] = [
     essence: "Beginner’s truthfulness; learn and look again.",
     integrated: "Name reality; enter work.",
   },
-
-  // ───────── Tier 2 — Refined Chains (11–20)
+  // Tier 2
   {
     id: "doubt",
     tier: 2,
@@ -213,8 +291,7 @@ const ENTRIES: CodexEntry[] = [
     essence: "Return attention to presence and purpose.",
     integrated: "Protect focus like fire.",
   },
-
-  // ───────── Tier 3 — Hidden Chains (21–30)
+  // Tier 3
   {
     id: "thinking-addiction",
     tier: 3,
@@ -305,8 +382,7 @@ const ENTRIES: CodexEntry[] = [
     essence: "Release debt and restore boundary.",
     integrated: "Say what’s true, then choose freedom.",
   },
-
-  // ───────── Tier 4 — False Light Chains (31–40)
+  // Tier 4
   {
     id: "spiritual-pride",
     tier: 4,
@@ -397,8 +473,7 @@ const ENTRIES: CodexEntry[] = [
     essence: "Union that preserves the given role.",
     integrated: "Stand distinct inside connection.",
   },
-
-  // ───────── Tier 5 — Crown Chains (41–45)
+  // Tier 5
   {
     id: "identification-with-i",
     tier: 5,
@@ -448,9 +523,7 @@ const ENTRIES: CodexEntry[] = [
 
 const byTier = (tier: 1 | 2 | 3 | 4 | 5) => ENTRIES.filter((e) => e.tier === tier);
 
-// ───────────────────────────────────────────────────────────────
-// Elements content (unchanged)
-// ───────────────────────────────────────────────────────────────
+// Elements
 const ELEMENTS = [
   {
     key: "fire",
@@ -499,9 +572,7 @@ const ELEMENTS = [
   },
 ] as const;
 
-// ───────────────────────────────────────────────────────────────
-// Small UI shells
-// ───────────────────────────────────────────────────────────────
+// UI shells
 const SectionShell: React.FC<{
   title: React.ReactNode;
   subtitle?: React.ReactNode;
@@ -517,16 +588,12 @@ const SectionShell: React.FC<{
       >
         <div className="flex-1 flex flex-col text-left leading-snug max-w-[92%]">
           <div className="text-amber-300 font-semibold tracking-wide">{title}</div>
-          {subtitle ? (
-            <div className="mt-0.5 text-sm text-neutral-400">{subtitle}</div>
-          ) : null}
+          {subtitle ? <div className="mt-0.5 text-sm text-neutral-400">{subtitle}</div> : null}
         </div>
         <div className="shrink-0 text-neutral-500">
           {open ? <Minus className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
         </div>
       </button>
-
-      {/* Content */}
       <div
         className={[
           "grid transition-all duration-200",
@@ -570,14 +637,14 @@ const EmptyHint = ({ label }: { label: string }) => (
 );
 
 // ───────────────────────────────────────────────────────────────
-// Page Component
+// Page
 // ───────────────────────────────────────────────────────────────
 export default function CodexPage() {
-  // search
   const [q, setQ] = useState("");
   const [openTiers, setOpenTiers] = useState<{ [k: number]: boolean }>({});
   const [elementsOpen, setElementsOpen] = useState<boolean>(false);
   const [codexOpen, setCodexOpen] = useState<boolean>(false);
+  const [medicinesOpen, setMedicinesOpen] = useState<boolean>(false); // at bottom
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -599,7 +666,7 @@ export default function CodexPage() {
       <h1 className="text-2xl font-semibold text-gold">Codex</h1>
       <p className="text-neutral-400 mt-1">Ego ↔ Essence entries and Temple Keys.</p>
 
-      <div className="mt-4">
+      <div className="mt-4 space-y-3">
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
@@ -611,125 +678,212 @@ export default function CodexPage() {
           />
         </div>
 
-        {/* Top-level sections with slight separation */}
-        <div className="mt-3 space-y-3">
-          {/* CODEX OF LIBERATION (wrapper) */}
+        {/* Codex of Liberation */}
+        <SectionShell
+          title={<span>Codex of Liberation</span>}
+          subtitle="45 Chains — Ego ↔ Essence map"
+          open={codexOpen}
+          onToggle={() => setCodexOpen((v) => !v)}
+        >
+          {/* TIER 1 */}
           <SectionShell
-            title={<span>Codex of Liberation</span>}
-            subtitle={"45 Chains — Ego ↔ Essence map"}
-            open={codexOpen}
-            onToggle={() => setCodexOpen((v) => !v)}
+            title={
+              <span>
+                Tier 1 — <span className="text-neutral-200">Gross Chains</span>
+              </span>
+            }
+            subtitle="The raw instincts — Lust through Ignorance."
+            open={!!openTiers[1]}
+            onToggle={() => toggleTier(1)}
           >
-            {/* TIER 1 */}
-            <SectionShell
-              title={<span>Tier 1 — <span className="text-neutral-200">Gross Chains</span></span>}
-              subtitle={"The raw instincts — Lust through Ignorance."}
-              open={!!openTiers[1]}
-              onToggle={() => toggleTier(1)}
-            >
-              {tierList(1).length ? (
-                <div className="grid gap-4">{tierList(1).map((e) => <EntryCard key={e.id} entry={e} />)}</div>
-              ) : (
-                <EmptyHint label="No Tier 1 entries in data yet. Add them to ENTRIES." />
-              )}
-            </SectionShell>
-
-            {/* TIER 2 */}
-            <SectionShell
-              title={<span>Tier 2 — <span className="text-neutral-200">Refined Chains</span></span>}
-              subtitle={"Subtle ego strategies — Doubt through Distraction."}
-              open={!!openTiers[2]}
-              onToggle={() => toggleTier(2)}
-            >
-              {tierList(2).length ? (
-                <div className="grid gap-4">{tierList(2).map((e) => <EntryCard key={e.id} entry={e} />)}</div>
-              ) : (
-                <EmptyHint label="No Tier 2 entries in data yet. Add them to ENTRIES." />
-              )}
-            </SectionShell>
-
-            {/* TIER 3 */}
-            <SectionShell
-              title={<span>Tier 3 — <span className="text-neutral-200">Hidden Chains</span></span>}
-              subtitle={"Invisible habits of mind — Addiction to Thinking through False Forgiveness."}
-              open={!!openTiers[3]}
-              onToggle={() => toggleTier(3)}
-            >
-              {tierList(3).length ? (
-                <div className="grid gap-4">{tierList(3).map((e) => <EntryCard key={e.id} entry={e} />)}</div>
-              ) : (
-                <EmptyHint label="No Tier 3 entries in data yet. Add them to ENTRIES." />
-              )}
-            </SectionShell>
-
-            {/* TIER 4 */}
-            <SectionShell
-              title={<span>Tier 4 — <span className="text-neutral-200">False Light Chains</span></span>}
-              subtitle={"Ego wearing spiritual clothes — Spiritual Pride through False Unity."}
-              open={!!openTiers[4]}
-              onToggle={() => toggleTier(4)}
-            >
-              {tierList(4).length ? (
-                <div className="grid gap-4">{tierList(4).map((e) => <EntryCard key={e.id} entry={e} />)}</div>
-              ) : (
-                <EmptyHint label="No Tier 4 entries in data yet. Add them to ENTRIES." />
-              )}
-            </SectionShell>
-
-            {/* TIER 5 */}
-            <SectionShell
-              title={<span>Tier 5 — <span className="text-neutral-200">Crown Chains</span></span>}
-              subtitle={"The final illusions — Identification, Fear of Death, Forgetfulness, Denial, Consent."}
-              open={!!openTiers[5]}
-              onToggle={() => toggleTier(5)}
-            >
-              {tierList(5).length ? (
-                <div className="grid gap-4">{tierList(5).map((e) => <EntryCard key={e.id} entry={e} />)}</div>
-              ) : (
-                <EmptyHint label="No Tier 5 entries in data yet. Add them to ENTRIES." />
-              )}
-            </SectionShell>
+            {tierList(1).length ? (
+              <div className="grid gap-4">
+                {tierList(1).map((e) => (
+                  <EntryCard key={e.id} entry={e} />
+                ))}
+              </div>
+            ) : (
+              <EmptyHint label="No Tier 1 entries in data yet. Add them to ENTRIES." />
+            )}
           </SectionShell>
 
-          {/* ELEMENTS */}
+          {/* TIER 2 */}
           <SectionShell
-            title={<span>Elements <span className="text-neutral-200">— keepers of balance</span></span>}
-            subtitle={"Fire • Air • Water • Earth • Ether"}
-            open={elementsOpen}
-            onToggle={() => setElementsOpen((v) => !v)}
+            title={
+              <span>
+                Tier 2 — <span className="text-neutral-200">Refined Chains</span>
+              </span>
+            }
+            subtitle="Subtle ego strategies — Doubt through Distraction."
+            open={!!openTiers[2]}
+            onToggle={() => toggleTier(2)}
           >
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {ELEMENTS.map((el) => {
-                const Icon = el.icon;
-                return (
-                  <div
-                    key={el.key}
-                    className="rounded-xl border border-neutral-800/70 bg-neutral-900/40 p-4"
-                  >
-                    <div className="flex items-center gap-2 font-medium">
-                      <Icon className="h-4 w-4 text-amber-300" />
-                      {el.name}
-                    </div>
-                    <div className="mt-1 text-sm text-neutral-400">{el.head}</div>
-                    <div className="mt-3 space-y-2">
-                      <div className="rounded-md bg-neutral-950/60 p-3 border border-neutral-800/70">
-                        <div className="text-xs text-neutral-400 mb-1 tracking-wide">EGO</div>
-                        <div className="text-sm">{el.ego}</div>
-                      </div>
-                      <div className="rounded-md bg-neutral-950/60 p-3 border border-neutral-800/70">
-                        <div className="text-xs text-neutral-400 mb-1 tracking-wide">ESSENCE</div>
-                        <div className="text-sm">{el.essence}</div>
-                      </div>
-                    </div>
-                    <div className="mt-3 text-sm text-amber-300">{el.tip}</div>
+            {tierList(2).length ? (
+              <div className="grid gap-4">
+                {tierList(2).map((e) => (
+                  <EntryCard key={e.id} entry={e} />
+                ))}
+              </div>
+            ) : (
+              <EmptyHint label="No Tier 2 entries in data yet. Add them to ENTRIES." />
+            )}
+          </SectionShell>
+
+          {/* TIER 3 */}
+          <SectionShell
+            title={
+              <span>
+                Tier 3 — <span className="text-neutral-200">Hidden Chains</span>
+              </span>
+            }
+            subtitle="Invisible habits of mind — Addiction to Thinking through False Forgiveness."
+            open={!!openTiers[3]}
+            onToggle={() => toggleTier(3)}
+          >
+            {tierList(3).length ? (
+              <div className="grid gap-4">
+                {tierList(3).map((e) => (
+                  <EntryCard key={e.id} entry={e} />
+                ))}
+              </div>
+            ) : (
+              <EmptyHint label="No Tier 3 entries in data yet. Add them to ENTRIES." />
+            )}
+          </SectionShell>
+
+          {/* TIER 4 */}
+          <SectionShell
+            title={
+              <span>
+                Tier 4 — <span className="text-neutral-200">False Light Chains</span>
+              </span>
+            }
+            subtitle="Ego wearing spiritual clothes — Spiritual Pride through False Unity."
+            open={!!openTiers[4]}
+            onToggle={() => toggleTier(4)}
+          >
+            {tierList(4).length ? (
+              <div className="grid gap-4">
+                {tierList(4).map((e) => (
+                  <EntryCard key={e.id} entry={e} />
+                ))}
+              </div>
+            ) : (
+              <EmptyHint label="No Tier 4 entries in data yet. Add them to ENTRIES." />
+            )}
+          </SectionShell>
+
+          {/* TIER 5 */}
+          <SectionShell
+            title={
+              <span>
+                Tier 5 — <span className="text-neutral-200">Crown Chains</span>
+              </span>
+            }
+            subtitle="The final illusions — Identification, Fear of Death, Forgetfulness, Denial, Consent."
+            open={!!openTiers[5]}
+            onToggle={() => toggleTier(5)}
+          >
+            {tierList(5).length ? (
+              <div className="grid gap-4">
+                {tierList(5).map((e) => (
+                  <EntryCard key={e.id} entry={e} />
+                ))}
+              </div>
+            ) : (
+              <EmptyHint label="No Tier 5 entries in data yet. Add them to ENTRIES." />
+            )}
+          </SectionShell>
+        </SectionShell>
+
+        {/* Elements */}
+        <SectionShell
+          title={
+            <span>
+              Elements <span className="text-neutral-200">— keepers of balance</span>
+            </span>
+          }
+          subtitle="Fire • Air • Water • Earth • Ether"
+          open={elementsOpen}
+          onToggle={() => setElementsOpen((v) => !v)}
+        >
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {ELEMENTS.map((el) => {
+              const Icon = el.icon;
+              return (
+                <div
+                  key={el.key}
+                  className="rounded-xl border border-neutral-800/70 bg-neutral-900/40 p-4"
+                >
+                  <div className="flex items-center gap-2 font-medium">
+                    <Icon className="h-4 w-4 text-amber-300" />
+                    {el.name}
                   </div>
-                );
-              })}
-            </div>
-          </SectionShell>
-        </div>
+                  <div className="mt-1 text-sm text-neutral-400">{el.head}</div>
+                  <div className="mt-3 space-y-2">
+                    <div className="rounded-md bg-neutral-950/60 p-3 border border-neutral-800/70">
+                      <div className="text-xs text-neutral-400 mb-1 tracking-wide">EGO</div>
+                      <div className="text-sm">{el.ego}</div>
+                    </div>
+                    <div className="rounded-md bg-neutral-950/60 p-3 border border-neutral-800/70">
+                      <div className="text-xs text-neutral-400 mb-1 tracking-wide">ESSENCE</div>
+                      <div className="text-sm">{el.essence}</div>
+                    </div>
+                  </div>
+                  <div className="mt-3 text-sm text-amber-300">{el.tip}</div>
+                </div>
+              );
+            })}
+          </div>
+        </SectionShell>
+
+        {/* Seven Medicines — now at the bottom */}
+        <SectionShell
+          title={<span>Seven Medicines of Awakening</span>}
+          subtitle="States to heal the seven main distortions."
+          open={medicinesOpen}
+          onToggle={() => setMedicinesOpen((v) => !v)}
+        >
+          <div className="grid gap-4 md:grid-cols-2">
+            {MEDICINES.map((m) => (
+              <div
+                key={m.name}
+                className="rounded-xl border border-neutral-800/70 bg-neutral-900/40 p-4 space-y-3"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold text-neutral-100">{m.name}</h3>
+                  <span className="text-[10px] uppercase tracking-wide text-neutral-500 bg-neutral-950/60 px-2 py-1 rounded">
+                    {m.center}
+                  </span>
+                </div>
+                <p className="text-sm text-neutral-300">
+                  <span className="text-neutral-500">Heals:</span> {m.heals}
+                </p>
+                <p className="text-sm text-neutral-300">
+                  <span className="text-neutral-500">Nature:</span> {m.nature}
+                </p>
+                <p className="text-sm text-neutral-300">
+                  <span className="text-neutral-500">Effect:</span> {m.effect}
+                </p>
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-neutral-500 mb-1">Practice</p>
+                  <p className="text-sm text-neutral-100 leading-relaxed">{m.practice}</p>
+                </div>
+                <div className="border-t border-neutral-800/60 pt-2">
+                  <p className="text-xs uppercase tracking-wide text-neutral-500 mb-1">Mantra</p>
+                  <p className="text-sm text-amber-200">{m.mantra}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 rounded-lg bg-neutral-950/40 border border-neutral-900/60 p-4">
+            <p className="text-sm text-neutral-300">
+              Move from crown downward or root upward. When a distortion appears (shame, grief, fear),
+              apply its medicine (dignity, compassion, courage). This is your inner apothecary.
+            </p>
+          </div>
+        </SectionShell>
       </div>
     </Shell>
   );
 }
-

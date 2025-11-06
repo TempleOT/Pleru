@@ -8,7 +8,7 @@ import SettingsPanel from "./SettingsPanel";
 
 export default function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-screen bg-neutral-950 text-neutral-200">
+    <div className="relative min-h-screen bg-neutral-950 text-neutral-200 overflow-hidden">
       {/* Background lights */}
       <AmbientBackground />
 
@@ -16,9 +16,25 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       <LeftPanel />
 
       {/* Main content */}
-      <main className="relative z-10 mx-auto max-w-4xl px-6 py-12">
-        <InfoBar />
-        {children}
+      <main
+        className="
+          relative z-10
+          w-full
+          pl-24           /* space for left panel */
+          pr-6
+          md:pr-16        /* start balancing on medium screens */
+          lg:pr-20
+          xl:pr-24        /* roughly matches pl-24 */
+          py-16
+          flex
+          justify-center
+        "
+      >
+        {/* Centered inner container */}
+        <div className="relative w-full max-w-6xl mx-auto space-y-8">
+          <InfoBar />
+          {children}
+        </div>
       </main>
 
       {/* Drawer + toggle button (top-right) */}
