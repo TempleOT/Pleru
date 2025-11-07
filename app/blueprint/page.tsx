@@ -4,7 +4,7 @@ import type { Blueprint, BlueprintInput } from "@/types/blueprint";
 import React, { useEffect, useState } from "react";
 import Shell from "@/components/Shell";
 import { lifePathFromAny } from "@/lib/numerology";
-import { Plus, User } from "lucide-react";
+import { Plus, User, X } from "lucide-react";
 
 // ── Types for Divine Identity raw payload (from your FastAPI) ──────────────
 type Identity = {
@@ -20,7 +20,7 @@ type Identity = {
   aspects: { a: string; b: string; aspect: string; angle: number; orb: number }[];
 };
 
-// ── Local profile type ───────────────────────────────────────────────
+// ── Local profile type ───────────────────────────────────────────
 type BlueprintProfile = {
   id: string;
   fullName: string;
@@ -175,17 +175,48 @@ export default function BlueprintPage() {
     const next = [...profiles, blank];
     persistProfiles(next);
     setActiveProfileId(id);
-    // clear current form
+    // clear current form/results
+    clearResults();
+  }
+
+  // delete user
+  function handleDeleteProfile(id: string) {
+    const next = profiles.filter((p) => p.id !== id);
+    persistProfiles(next);
+
+    // if we deleted the active one
+    if (activeProfileId === id) {
+      if (next[0]) {
+        setActiveProfileId(next[0].id);
+        // load their data into form
+        setFullName(next[0].fullName);
+        setBirthDate(next[0].birthDate);
+        setBirthTime(next[0].birthTime);
+        setBirthLocation(next[0].birthLocation);
+      } else {
+        // no profiles left
+        setActiveProfileId(null);
+        clearForm();
+        clearResults();
+      }
+    }
+  }
+
+  function clearForm() {
     setFullName("");
     setBirthDate("");
     setBirthTime("");
     setBirthLocation("");
-    // also clear results for clarity
+  }
+
+  function clearResults() {
     setNumerology(null);
     setNumDetails(null);
     setHumanDesign(null);
     setDivineIdentity(null);
     setGuidance(null);
+    setIdentityRaw(null);
+    setReading("");
   }
 
   // update current profile fields as user types
@@ -287,7 +318,6 @@ export default function BlueprintPage() {
         });
       }
 
-      // (1) Numerology + guidance via your /api/blueprint
       const res = await fetch("/api/blueprint", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -447,20 +477,35 @@ export default function BlueprintPage() {
 
       {/* Profiles bar */}
       <div className="mx-auto max-w-5xl px-2 mb-6 flex gap-3 overflow-x-auto pb-1">
-        {profiles.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => setActiveProfileId(p.id)}
-            className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${
-              p.id === activeProfileId
-                ? "border-gold bg-gold/10 text-gold"
-                : "border-neutral-800 bg-neutral-950/40 text-neutral-200 hover:border-neutral-600"
-            }`}
-          >
-            <User size={14} />
-            <span className="truncate max-w-[140px]">{p.fullName || "Unnamed profile"}</span>
-          </button>
-        ))}
+        {profiles.map((p) => {
+          const active = p.id === activeProfileId;
+          return (
+            <div
+              key={p.id}
+              className={`relative flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${
+                active
+                  ? "border-gold bg-gold/10 text-gold"
+                  : "border-neutral-800 bg-neutral-950/40 text-neutral-200"
+              }`}
+            >
+              <button onClick={() => setActiveProfileId(p.id)} className="flex items-center gap-2">
+                <User size={14} />
+                <span className="truncate max-w-[140px]">
+                  {p.fullName || "Unnamed profile"}
+                </span>
+              </button>
+              {profiles.length > 1 && (
+                <button
+                  onClick={() => handleDeleteProfile(p.id)}
+                  className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900/70 text-neutral-300 hover:text-red-300"
+                  title="Delete profile"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+          );
+        })}
         <button
           onClick={handleAddProfile}
           className="flex items-center gap-2 rounded-full border border-dashed border-neutral-700/80 px-4 py-2 text-sm text-neutral-300 hover:border-gold hover:text-gold"
@@ -668,9 +713,7 @@ export default function BlueprintPage() {
             {/* Guidance */}
             <Card title="Guidance">
               {!guidance ? (
-                <p className="p-4 text-sm text-neutral-400">
-                  No guidance yet. Generate to receive a next step.
-                </p>
+                <p className="p-4 text-sm text-neutral-400">No guidance yet. Generate to receive a next step.</p>
               ) : (
                 <div className="p-4 text-sm text-neutral-300">
                   <p className="text-amber-300 font-medium">{guidance.nextStep}</p>
