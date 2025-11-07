@@ -292,7 +292,7 @@ export default function BlueprintPage() {
     setIsGenerating(true);
 
     const fallbackLifePath = lifePathFromAny(birthDate) ?? calcLifePath(birthDate) ?? "—";
-    const birthdayNumber = calcBirthdayNumber(birthDate) ?? "—";
+       const birthdayNumber = calcBirthdayNumber(birthDate) ?? "—";
 
     try {
       const payload: BlueprintInput = {
@@ -483,9 +483,9 @@ export default function BlueprintPage() {
               </button>
               {profiles.length > 1 && (
                 <button
-                    onClick={() => handleDeleteProfile(p.id)}
-                    className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900/70 text-neutral-300 hover:text-red-300"
-                    title="Delete profile"
+                  onClick={() => handleDeleteProfile(p.id)}
+                  className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900/70 text-neutral-300 hover:text-red-300"
+                  title="Delete profile"
                 >
                   <X size={12} />
                 </button>
@@ -595,7 +595,7 @@ export default function BlueprintPage() {
               </div>
             </Card>
 
-            {/* right side of top grid: Guidance + maybe small info */}
+            {/* right side of top grid: Guidance */}
             <div className="space-y-6 lg:col-span-2">
               <Card title="Guidance">
                 {!guidance ? (
@@ -611,8 +611,12 @@ export default function BlueprintPage() {
             </div>
           </div>
 
-          {/* Golden Human Design-style visual */}
-          <GoldenBodygraph name={fullName || "Soul Design"} />
+          {/* Human Design gold UI */}
+          <HDGoldBodygraph
+            name={fullName || "Essence Bodygraph"}
+            definedCenters={["throat", "g", "sacral"]} // mock defined centers
+            highlightedChannels={["throat-g", "g-sacral"]}
+          />
 
           {/* bottom intelligence blocks */}
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -792,22 +796,113 @@ function Disclosure({
   );
 }
 
-/* ---------------- Golden bodygraph placeholder ---------------- */
-function GoldenBodygraph({ name }: { name: string }) {
+/* ---------------- Human Design gold UI ---------------- */
+function HDGoldBodygraph({
+  name,
+  definedCenters = [],
+  highlightedChannels = [],
+}: {
+  name: string;
+  definedCenters?: string[];
+  highlightedChannels?: string[];
+}) {
+  // layout tuned for 160x320 box
+  const centers = [
+    { id: "head", label: "Head", top: "3%", left: "50%", w: 70, h: 50, rounded: "rounded-b-2xl" },
+    { id: "ajna", label: "Ajna", top: "13%", left: "50%", w: 80, h: 55, rounded: "rounded-2xl" },
+    { id: "throat", label: "Throat", top: "23%", left: "50%", w: 90, h: 60, rounded: "rounded-xl" },
+    { id: "g", label: "G", top: "35%", left: "50%", w: 110, h: 85, rounded: "rounded-2xl" },
+    { id: "heart", label: "Heart", top: "36%", left: "69%", w: 55, h: 40, rounded: "rounded-lg" },
+    { id: "spleen", label: "Spleen", top: "46%", left: "27%", w: 72, h: 85, rounded: "rounded-3xl" },
+    { id: "sacral", label: "Sacral", top: "53%", left: "50%", w: 110, h: 85, rounded: "rounded-2xl" },
+    { id: "solar", label: "Solar", top: "64%", left: "74%", w: 80, h: 80, rounded: "rounded-3xl" },
+    { id: "root", label: "Root", top: "78%", left: "50%", w: 120, h: 75, rounded: "rounded-2xl" },
+  ];
+
   return (
     <div className="overflow-hidden rounded-2xl border border-gold/40 bg-gradient-to-b from-neutral-950 via-neutral-900 to-neutral-950 py-8 px-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-        {/* visual */}
-        <div className="relative mx-auto h-72 w-40 md:mx-0">
-          {/* fake silhouette */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-b from-gold/70 via-gold/10 to-transparent blur-2xl opacity-60" />
-          <div className="absolute inset-x-4 top-4 h-10 rounded-t-full bg-neutral-950/40 border border-gold/20" />
-          {/* centers as circles/rects */}
-          <div className="absolute left-1/2 top-14 h-10 w-14 -translate-x-1/2 rounded-xl border border-gold/50 bg-neutral-950/60" />
-          <div className="absolute left-1/2 top-28 h-12 w-18 -translate-x-1/2 rounded-xl border border-gold/40 bg-neutral-950/60" />
-          <div className="absolute left-1/2 top-42 h-14 w-16 -translate-x-1/2 rounded-xl border border-gold/30 bg-neutral-950/60" />
-          {/* lines */}
-          <div className="absolute left-1/2 top-20 h-40 w-px -translate-x-1/2 bg-gold/40" />
+        {/* diagram */}
+        <div className="relative mx-auto h-80 w-40 md:mx-0">
+          {/* background glow */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(234,179,8,0.22),transparent_60%)] pointer-events-none" />
+
+          {/* channels (simple) */}
+          {/* head -> ajna */}
+          <div
+            className={`absolute left-1/2 top-[8%] h-[38px] w-[3px] -translate-x-1/2 ${
+              highlightedChannels.includes("head-ajna") ? "bg-gold" : "bg-gold/20"
+            }`}
+          />
+          {/* ajna -> throat */}
+          <div
+            className={`absolute left-1/2 top-[17%] h-[42px] w-[3px] -translate-x-1/2 ${
+              highlightedChannels.includes("ajna-throat") ? "bg-gold" : "bg-gold/20"
+            }`}
+          />
+          {/* throat -> g */}
+          <div
+            className={`absolute left-1/2 top-[28%] h-[64px] w-[3px] -translate-x-1/2 ${
+              highlightedChannels.includes("throat-g") ? "bg-gold" : "bg-gold/15"
+            }`}
+          />
+          {/* g -> sacral */}
+          <div
+            className={`absolute left-1/2 top-[44%] h-[70px] w-[3px] -translate-x-1/2 ${
+              highlightedChannels.includes("g-sacral") ? "bg-gold" : "bg-gold/15"
+            }`}
+          />
+          {/* sacral -> root */}
+          <div
+            className={`absolute left-1/2 top-[63%] h-[70px] w-[3px] -translate-x-1/2 ${
+              highlightedChannels.includes("sacral-root") ? "bg-gold" : "bg-gold/15"
+            }`}
+          />
+          {/* spleen -> sacral (diag) */}
+          <div
+            className={`absolute top-[58%] left-[35%] h-[3px] w-[70px] rotate-[-21deg] origin-left ${
+              highlightedChannels.includes("spleen-sacral") ? "bg-gold" : "bg-gold/10"
+            }`}
+          />
+          {/* solar -> sacral (diag) */}
+          <div
+            className={`absolute top-[58%] right-[5%] h-[3px] w-[70px] rotate-[20deg] origin-right ${
+              highlightedChannels.includes("solar-sacral") ? "bg-gold" : "bg-gold/10"
+            }`}
+          />
+          {/* heart -> g */}
+          <div
+            className={`absolute top-[40%] left-[56%] h-[3px] w-[60px] rotate-[0deg] origin-left ${
+              highlightedChannels.includes("heart-g") ? "bg-gold" : "bg-gold/10"
+            }`}
+          />
+
+          {/* centers */}
+          {centers.map((c) => {
+            const defined = definedCenters.includes(c.id);
+            return (
+              <div
+                key={c.id}
+                className={`absolute -translate-x-1/2 border flex items-center justify-center ${
+                  c.rounded
+                } transition ${
+                  defined
+                    ? "bg-gold/85 border-gold text-neutral-950"
+                    : "bg-neutral-950/40 border-gold/25 text-neutral-200"
+                }`}
+                style={{
+                  top: c.top,
+                  left: c.left,
+                  width: c.w,
+                  height: c.h,
+                }}
+              >
+                <span className="text-[10px] uppercase tracking-wide leading-tight px-1 text-center">
+                  {c.label}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
         {/* text side */}
@@ -815,11 +910,11 @@ function GoldenBodygraph({ name }: { name: string }) {
           <p className="text-xs uppercase tracking-wide text-neutral-400">Essence bodygraph</p>
           <h2 className="text-lg font-semibold text-gold">{name}</h2>
           <p className="text-sm text-neutral-300">
-            Visual placeholder for Human Design / Body layout. We’ll render centers, channels, and definition here once
-            backend is wired.
+            Golden Human Design layout. Centers turn gold when defined. Channels can be lit when a transit/cycle is
+            active.
           </p>
           <p className="text-sm text-neutral-500">
-            Shows HD → above, then mind/spirit layers below for a full Trinity view.
+            Later: swap this for real coordinates + gates from your HD backend.
           </p>
         </div>
       </div>
