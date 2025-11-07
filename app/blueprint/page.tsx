@@ -91,7 +91,6 @@ export default function BlueprintPage() {
       if (raw) setUi(JSON.parse(raw));
     } catch {}
 
-    // load profiles
     try {
       const pRaw = localStorage.getItem("pleru.blueprint.profiles");
       if (pRaw) {
@@ -162,46 +161,6 @@ export default function BlueprintPage() {
     } catch {}
   }
 
-  // add new user
-  function handleAddProfile() {
-    const id = "profile-" + Date.now();
-    const blank: BlueprintProfile = {
-      id,
-      fullName: "",
-      birthDate: "",
-      birthTime: "",
-      birthLocation: "",
-    };
-    const next = [...profiles, blank];
-    persistProfiles(next);
-    setActiveProfileId(id);
-    // clear current form/results
-    clearResults();
-  }
-
-  // delete user
-  function handleDeleteProfile(id: string) {
-    const next = profiles.filter((p) => p.id !== id);
-    persistProfiles(next);
-
-    // if we deleted the active one
-    if (activeProfileId === id) {
-      if (next[0]) {
-        setActiveProfileId(next[0].id);
-        // load their data into form
-        setFullName(next[0].fullName);
-        setBirthDate(next[0].birthDate);
-        setBirthTime(next[0].birthTime);
-        setBirthLocation(next[0].birthLocation);
-      } else {
-        // no profiles left
-        setActiveProfileId(null);
-        clearForm();
-        clearResults();
-      }
-    }
-  }
-
   function clearForm() {
     setFullName("");
     setBirthDate("");
@@ -219,12 +178,47 @@ export default function BlueprintPage() {
     setReading("");
   }
 
+  // add new user
+  function handleAddProfile() {
+    const id = "profile-" + Date.now();
+    const blank: BlueprintProfile = {
+      id,
+      fullName: "",
+      birthDate: "",
+      birthTime: "",
+      birthLocation: "",
+    };
+    const next = [...profiles, blank];
+    persistProfiles(next);
+    setActiveProfileId(id);
+    clearForm();
+    clearResults();
+  }
+
+  // delete user
+  function handleDeleteProfile(id: string) {
+    const next = profiles.filter((p) => p.id !== id);
+    persistProfiles(next);
+
+    if (activeProfileId === id) {
+      if (next[0]) {
+        setActiveProfileId(next[0].id);
+        setFullName(next[0].fullName);
+        setBirthDate(next[0].birthDate);
+        setBirthTime(next[0].birthTime);
+        setBirthLocation(next[0].birthLocation);
+      } else {
+        setActiveProfileId(null);
+        clearForm();
+        clearResults();
+      }
+    }
+  }
+
   // update current profile fields as user types
   function updateActiveProfile(partial: Partial<BlueprintProfile>) {
     if (!activeProfileId) return;
-    const next = profiles.map((p) =>
-      p.id === activeProfileId ? { ...p, ...partial } : p
-    );
+    const next = profiles.map((p) => (p.id === activeProfileId ? { ...p, ...partial } : p));
     persistProfiles(next);
   }
 
@@ -308,7 +302,6 @@ export default function BlueprintPage() {
         birthLocation,
       };
 
-      // save current form into active profile too
       if (activeProfileId) {
         updateActiveProfile({
           fullName,
@@ -341,7 +334,6 @@ export default function BlueprintPage() {
 
       setNumDetails(details?.length ? details : null);
 
-      // Human Design placeholder
       const hdNotes: string[] = [];
       if (data?.humanDesign?.type) hdNotes.push(`Type: ${(data as any).humanDesign.type}`);
       if (data?.humanDesign?.authority)
@@ -356,9 +348,8 @@ export default function BlueprintPage() {
           : ["Call your server action that uses an ephemeris/HD library.", "Return structured blocks for UI."],
       });
 
-      // (2) Divine Identity
       const coords = await geocode(birthLocation);
-      const utcHour = localTimeToUtcDecimal(birthTime) ?? 12; // noon UTC fallback
+      const utcHour = localTimeToUtcDecimal(birthTime) ?? 12;
 
       if (coords) {
         const [y, m, d] = birthDate ? birthDate.split("-").map(Number) : [0, 0, 0];
@@ -417,7 +408,6 @@ export default function BlueprintPage() {
         setIdentityRaw(null);
       }
 
-      // Guidance
       setGuidance({
         nextStep:
           data?.guidance?.nextStep ?? "Sit 10 minutes in stillness; choose one aligned action today.",
@@ -458,7 +448,6 @@ export default function BlueprintPage() {
     }
   }
 
-  // Accent helpers
   const ring = ui.accent === "emerald" ? "focus:ring-emerald-400" : "focus:ring-gold/60";
   const btn =
     ui.accent === "emerald"
@@ -490,15 +479,13 @@ export default function BlueprintPage() {
             >
               <button onClick={() => setActiveProfileId(p.id)} className="flex items-center gap-2">
                 <User size={14} />
-                <span className="truncate max-w-[140px]">
-                  {p.fullName || "Unnamed profile"}
-                </span>
+                <span className="truncate max-w-[140px]">{p.fullName || "Unnamed profile"}</span>
               </button>
               {profiles.length > 1 && (
                 <button
-                  onClick={() => handleDeleteProfile(p.id)}
-                  className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900/70 text-neutral-300 hover:text-red-300"
-                  title="Delete profile"
+                    onClick={() => handleDeleteProfile(p.id)}
+                    className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900/70 text-neutral-300 hover:text-red-300"
+                    title="Delete profile"
                 >
                   <X size={12} />
                 </button>
@@ -540,87 +527,108 @@ export default function BlueprintPage() {
           </div>
         </div>
       ) : (
-        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 px-2 pb-24 lg:grid-cols-3">
-          {/* Form */}
-          <Card>
-            <div className="p-4 border-b border-neutral-800/80">
-              <h2 className="text-base font-semibold">Your Birth Details</h2>
-            </div>
-            <div className="space-y-4 p-4">
-              <Field label="Full Name">
-                <input
-                  className={`w-full rounded-md border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm outline-none focus:ring-1 ${ring}`}
-                  placeholder="Full name"
-                  value={fullName}
-                  onChange={(e) => {
-                    setFullName(e.target.value);
-                    updateActiveProfile({ fullName: e.target.value });
-                  }}
-                />
-              </Field>
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Date of Birth">
-                  <input
-                    type="date"
-                    className={`w-full rounded-md border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm outline-none ${ring}`}
-                    value={birthDate}
-                    onChange={(e) => {
-                      setBirthDate(e.target.value);
-                      updateActiveProfile({ birthDate: e.target.value });
-                    }}
-                  />
-                </Field>
-                <Field label="Time of Birth">
-                  <input
-                    type="time"
-                    className={`w-full rounded-md border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm outline-none ${ring}`}
-                    value={birthTime}
-                    onChange={(e) => {
-                      setBirthTime(e.target.value);
-                      updateActiveProfile({ birthTime: e.target.value });
-                    }}
-                  />
-                </Field>
+        <div className="mx-auto max-w-5xl px-2 pb-24 space-y-6">
+          {/* top: form */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {/* Form */}
+            <Card>
+              <div className="p-4 border-b border-neutral-800/80">
+                <h2 className="text-base font-semibold">Your Birth Details</h2>
               </div>
-              <Field label="Birth Location">
-                <input
-                  className={`w-full rounded-md border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm outline-none focus:ring-1 ${ring}`}
-                  placeholder="City, State/Region, Country"
-                  value={birthLocation}
-                  onChange={(e) => {
-                    setBirthLocation(e.target.value);
-                    updateActiveProfile({ birthLocation: e.target.value });
-                  }}
-                />
-                <p className="text-xs text-neutral-500 mt-1">
-                  Tip: wire to places autocomplete later. Accurate time & location improve HD/astrology.
-                </p>
-              </Field>
-              <button
-                onClick={handleGenerate}
-                disabled={isGenerating || !fullName || !birthDate || !birthLocation}
-                className={`w-full rounded-md px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${btn}`}
-              >
-                {isGenerating ? "Generating…" : "Generate Blueprint"}
-              </button>
-            </div>
-          </Card>
+              <div className="space-y-4 p-4">
+                <Field label="Full Name">
+                  <input
+                    className={`w-full rounded-md border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm outline-none focus:ring-1 ${ring}`}
+                    placeholder="Full name"
+                    value={fullName}
+                    onChange={(e) => {
+                      setFullName(e.target.value);
+                      updateActiveProfile({ fullName: e.target.value });
+                    }}
+                  />
+                </Field>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Date of Birth">
+                    <input
+                      type="date"
+                      className={`w-full rounded-md border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm outline-none ${ring}`}
+                      value={birthDate}
+                      onChange={(e) => {
+                        setBirthDate(e.target.value);
+                        updateActiveProfile({ birthDate: e.target.value });
+                      }}
+                    />
+                  </Field>
+                  <Field label="Time of Birth">
+                    <input
+                      type="time"
+                      className={`w-full rounded-md border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm outline-none ${ring}`}
+                      value={birthTime}
+                      onChange={(e) => {
+                        setBirthTime(e.target.value);
+                        updateActiveProfile({ birthTime: e.target.value });
+                      }}
+                    />
+                  </Field>
+                </div>
+                <Field label="Birth Location">
+                  <input
+                    className={`w-full rounded-md border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm outline-none focus:ring-1 ${ring}`}
+                    placeholder="City, State/Region, Country"
+                    value={birthLocation}
+                    onChange={(e) => {
+                      setBirthLocation(e.target.value);
+                      updateActiveProfile({ birthLocation: e.target.value });
+                    }}
+                  />
+                  <p className="text-xs text-neutral-500 mt-1">
+                    Tip: wire to places autocomplete later. Accurate time & location improve HD/astrology.
+                  </p>
+                </Field>
+                <button
+                  onClick={handleGenerate}
+                  disabled={isGenerating || !fullName || !birthDate || !birthLocation}
+                  className={`w-full rounded-md px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${btn}`}
+                >
+                  {isGenerating ? "Generating…" : "Generate Blueprint"}
+                </button>
+              </div>
+            </Card>
 
-          {/* Results */}
-          <div className="space-y-6 lg:col-span-2">
-            {/* Numerology Overview */}
+            {/* right side of top grid: Guidance + maybe small info */}
+            <div className="space-y-6 lg:col-span-2">
+              <Card title="Guidance">
+                {!guidance ? (
+                  <p className="p-4 text-sm text-neutral-400">
+                    No guidance yet. Generate to receive a next step.
+                  </p>
+                ) : (
+                  <div className="p-4 text-sm text-neutral-300">
+                    <p className="text-amber-300 font-medium">{guidance.nextStep}</p>
+                  </div>
+                )}
+              </Card>
+            </div>
+          </div>
+
+          {/* Golden Human Design-style visual */}
+          <GoldenBodygraph name={fullName || "Soul Design"} />
+
+          {/* bottom intelligence blocks */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {/* Numerology */}
             <Card title="Numerology (Mind)">
               {!numerology ? (
                 <p className="p-4 text-sm text-neutral-400">
-                  No data yet. Generate to see Life Path and more.
+                  Generate to see Life Path and primary numbers.
                 </p>
               ) : (
-                <div className="p-4 text-sm">
-                  <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+                <div className="p-4 text-sm space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
                     <InfoStat label="Life Path" value={numerology.lifePath} />
                     <InfoStat label="Birthday" value={numerology.birthdayNumber} />
                   </div>
-                  <ul className="mt-3 list-disc space-y-1 pl-5 text-neutral-400">
+                  <ul className="list-disc space-y-1 pl-4 text-neutral-400">
                     {numerology.notes.map((n, i) => (
                       <li key={i}>{n}</li>
                     ))}
@@ -629,74 +637,35 @@ export default function BlueprintPage() {
               )}
             </Card>
 
-            {/* Numerology — Detailed Reading */}
-            <Card title="Numerology — Detailed Reading">
-              {!numDetails ? (
-                <p className="p-4 text-sm text-neutral-400">
-                  Generate to see a Gnostic-style reading for Life Path, Expression, Soul Urge,
-                  Personality, Maturity, and Balance.
-                </p>
-              ) : (
-                <div className="p-4 grid gap-4 md:grid-cols-2">
-                  {numDetails.map((d, i) => (
-                    <div key={`${d.key}-${i}`} className="rounded-lg border border-neutral-800 bg-neutral-950/60 p-4">
-                      <div className="text-xs uppercase tracking-wide text-neutral-500">{d.label}</div>
-                      <div className="mt-1 text-lg font-semibold">{d.value}</div>
-                      <p className="mt-2 text-sm leading-relaxed text-neutral-300">{d.reading}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
-
-            {/* Human Design (Body) */}
-            <Card title="Human Design (Body)">
-              {!humanDesign ? (
-                <p className="p-4 text-sm text-neutral-400">
-                  No data yet. Generate to fetch Type, Strategy, Authority, Centers, Profile, Cross.
-                </p>
-              ) : (
-                <div className="p-4 text-sm text-neutral-300">
-                  <p>{humanDesign.summary}</p>
-                  <ul className="mt-3 list-disc space-y-1 pl-5 text-neutral-400">
-                    {humanDesign.notes.map((n, i) => (
-                      <li key={i}>{n}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </Card>
-
-            {/* Divine Identity (Spirit) */}
+            {/* Divine Identity */}
             <Card title="Divine Identity (Spirit)">
               {!divineIdentity ? (
                 <p className="p-4 text-sm text-neutral-400">
-                  No data yet. Generate to see Sun • Moon • Rising and Role.
+                  Generate to see Sun • Moon • Rising and Role.
                 </p>
               ) : (
-                <div className="p-4 text-sm">
-                  <div className="grid grid-cols-3 gap-4">
+                <div className="p-4 text-sm space-y-3">
+                  <div className="grid grid-cols-3 gap-3">
                     <InfoStat label="Sun" value={divineIdentity.sun} />
                     <InfoStat label="Moon" value={divineIdentity.moon} />
                     <InfoStat label="Rising" value={divineIdentity.rising} />
                   </div>
-                  <div className="mt-3 text-neutral-300">
-                    <span className="text-neutral-400">Role:</span> {divineIdentity.role}
-                  </div>
-                  <ul className="mt-3 list-disc space-y-1 pl-5 text-neutral-400">
+                  <p className="text-neutral-300 text-sm">
+                    <span className="text-neutral-500">Role:</span> {divineIdentity.role}
+                  </p>
+                  <ul className="list-disc space-y-1 pl-4 text-neutral-400">
                     {divineIdentity.notes.map((n, i) => (
                       <li key={i}>{n}</li>
                     ))}
                   </ul>
-
                   {identityRaw && (
                     <>
                       <button
                         onClick={() => interpretWithOllama(identityRaw)}
                         disabled={readingBusy}
-                        className="mt-3 rounded-md bg-indigo-600 px-4 py-2 text-sm hover:bg-indigo-500 disabled:opacity-60"
+                        className="mt-2 rounded-md bg-indigo-600 px-4 py-2 text-sm hover:bg-indigo-500 disabled:opacity-60"
                       >
-                        {readingBusy ? "Asking Ollama…" : "Interpret with Ollama (Ego ↔ Essence)"}
+                        {readingBusy ? "Asking Ollama…" : "Interpret with Ollama"}
                       </button>
                       {reading && (
                         <div className="mt-3 rounded-md border border-neutral-800 p-3">
@@ -710,57 +679,64 @@ export default function BlueprintPage() {
               )}
             </Card>
 
-            {/* Guidance */}
-            <Card title="Guidance">
-              {!guidance ? (
-                <p className="p-4 text-sm text-neutral-400">No guidance yet. Generate to receive a next step.</p>
+            {/* Human Design (Desc) */}
+            <Card title="Human Design (Body)">
+              {!humanDesign ? (
+                <p className="p-4 text-sm text-neutral-400">
+                  Generate to fetch Type, Strategy, Authority, Centers, Profile.
+                </p>
               ) : (
-                <div className="p-4 text-sm text-neutral-300">
-                  <p className="text-amber-300 font-medium">{guidance.nextStep}</p>
+                <div className="p-4 text-sm text-neutral-300 space-y-3">
+                  <p>{humanDesign.summary}</p>
+                  <ul className="list-disc space-y-1 pl-4 text-neutral-400">
+                    {humanDesign.notes.map((n, i) => (
+                      <li key={i}>{n}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </Card>
-
-            {/* Life-Cycle Compass — Timing Map */}
-            <Card title="Life-Cycle Compass — Timing Map">
-              <p className="px-4 pt-4 text-sm text-neutral-400">
-                Visual timeline merging Numerology pinnacles, Human Design cycles, and major Astrology windows.
-              </p>
-              <div className="p-4 flex gap-3 overflow-x-auto">
-                {MOCK_CYCLES.map((c) => {
-                  const today = new Date().getTime();
-                  const active =
-                    today >= new Date(c.start).getTime() &&
-                    today <= new Date(c.end).getTime();
-                  return (
-                    <div
-                      key={c.id}
-                      className={`min-w-[220px] rounded-2xl p-4 border ${
-                        active ? "border-gold bg-gold/5" : "border-neutral-800 bg-neutral-950/40"
-                      }`}
-                    >
-                      <p className="text-[10px] uppercase tracking-wide text-neutral-500 mb-1">
-                        {c.source}
-                      </p>
-                      <p className="text-sm font-medium text-neutral-100">{c.title}</p>
-                      <p className="text-xs text-neutral-400 mt-1">
-                        {c.start} → {c.end}
-                      </p>
-                      <p className="text-xs text-neutral-300 mt-2 line-clamp-2">{c.frequency}</p>
-                      {active && (
-                        <div className="mt-3 rounded-lg bg-neutral-950/40 border border-neutral-800 p-2">
-                          <p className="text-[10px] uppercase tracking-wide text-neutral-500 mb-1">
-                            Current ritual
-                          </p>
-                          <p className="text-xs text-neutral-100">{c.ritual}</p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </Card>
           </div>
+
+          {/* Life-Cycle Compass — outside, at bottom */}
+          <Card title="Life-Cycle Compass — Timing Map">
+            <p className="px-4 pt-4 text-sm text-neutral-400">
+              Visual timeline merging Numerology pinnacles, Human Design cycles, and major Astrology windows.
+            </p>
+            <div className="p-4 flex gap-3 overflow-x-auto">
+              {MOCK_CYCLES.map((c) => {
+                const today = new Date().getTime();
+                const active =
+                  today >= new Date(c.start).getTime() &&
+                  today <= new Date(c.end).getTime();
+                return (
+                  <div
+                    key={c.id}
+                    className={`min-w-[220px] rounded-2xl p-4 border ${
+                      active ? "border-gold bg-gold/5" : "border-neutral-800 bg-neutral-950/40"
+                    }`}
+                  >
+                    <p className="text-[10px] uppercase tracking-wide text-neutral-500 mb-1">
+                      {c.source}
+                    </p>
+                    <p className="text-sm font-medium text-neutral-100">{c.title}</p>
+                    <p className="text-xs text-neutral-400 mt-1">
+                      {c.start} → {c.end}
+                    </p>
+                    <p className="text-xs text-neutral-300 mt-2 line-clamp-2">{c.frequency}</p>
+                    {active && (
+                      <div className="mt-3 rounded-lg bg-neutral-950/40 border border-neutral-800 p-2">
+                        <p className="text-[10px] uppercase tracking-wide text-neutral-500 mb-1">
+                          Current ritual
+                        </p>
+                        <p className="text-xs text-neutral-100">{c.ritual}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
         </div>
       )}
     </Shell>
@@ -812,6 +788,41 @@ function Disclosure({
         <span className="text-xs text-neutral-400">{subtitle ?? (open ? "Hide" : "Show")}</span>
       </button>
       {open ? <div className="border-t border-neutral-800 p-4">{children}</div> : null}
+    </div>
+  );
+}
+
+/* ---------------- Golden bodygraph placeholder ---------------- */
+function GoldenBodygraph({ name }: { name: string }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-gold/40 bg-gradient-to-b from-neutral-950 via-neutral-900 to-neutral-950 py-8 px-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        {/* visual */}
+        <div className="relative mx-auto h-72 w-40 md:mx-0">
+          {/* fake silhouette */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-b from-gold/70 via-gold/10 to-transparent blur-2xl opacity-60" />
+          <div className="absolute inset-x-4 top-4 h-10 rounded-t-full bg-neutral-950/40 border border-gold/20" />
+          {/* centers as circles/rects */}
+          <div className="absolute left-1/2 top-14 h-10 w-14 -translate-x-1/2 rounded-xl border border-gold/50 bg-neutral-950/60" />
+          <div className="absolute left-1/2 top-28 h-12 w-18 -translate-x-1/2 rounded-xl border border-gold/40 bg-neutral-950/60" />
+          <div className="absolute left-1/2 top-42 h-14 w-16 -translate-x-1/2 rounded-xl border border-gold/30 bg-neutral-950/60" />
+          {/* lines */}
+          <div className="absolute left-1/2 top-20 h-40 w-px -translate-x-1/2 bg-gold/40" />
+        </div>
+
+        {/* text side */}
+        <div className="flex-1 space-y-3">
+          <p className="text-xs uppercase tracking-wide text-neutral-400">Essence bodygraph</p>
+          <h2 className="text-lg font-semibold text-gold">{name}</h2>
+          <p className="text-sm text-neutral-300">
+            Visual placeholder for Human Design / Body layout. We’ll render centers, channels, and definition here once
+            backend is wired.
+          </p>
+          <p className="text-sm text-neutral-500">
+            Shows HD → above, then mind/spirit layers below for a full Trinity view.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
