@@ -22,17 +22,16 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           flex
           flex-1
           justify-center
-          items-center
+          items-start          /* was items-center */
           px-6
           md:px-16
           lg:px-20
           xl:px-24
           py-16
-          text-center
         "
       >
         {/* Centered inner container */}
-        <div className="relative w-full max-w-6xl mx-auto space-y-8">
+        <div className="relative w-full max-w-6xl mx-auto space-y-8 text-left">
           <InfoBar />
           {children}
         </div>
