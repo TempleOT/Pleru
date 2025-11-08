@@ -1,54 +1,37 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Sparkles, RefreshCw } from "lucide-react";
 
 const GOLDEN_WORDS = [
   "You’re not becoming light — you’re remembering.",
   "Essence moves when ego gets quiet.",
-  "Obedience to truth is the real freedom.",
+  "Obedience to truth is inner freedom.",
   "Let today be done from presence, not panic.",
-  "What you seek is seeking to live through you.",
+  "What you seek is seeking to move through you.",
   "Return to the watcher — the storm is not you.",
   "Love is devotion without possession.",
 ];
 
 export default function GoldenWord() {
-  const [word, setWord] = useState<string>("");
+  const [word, setWord] = useState("");
 
-  // pick one based on date so it stays the same all day
   useEffect(() => {
-    const today = new Date().getDate();
-    const idx = today % GOLDEN_WORDS.length;
+    const day = new Date().getDate();
+    const idx = day % GOLDEN_WORDS.length;
     setWord(GOLDEN_WORDS[idx]);
   }, []);
 
-  const refresh = async () => {
-    // 1) local random fallback
-    const random = GOLDEN_WORDS[Math.floor(Math.random() * GOLDEN_WORDS.length)];
-    setWord(random);
-
-    // 2) OPTIONAL: if you later make an API route that calls Ollama,
-    // you can do something like:
-    // const res = await fetch("/api/golden-word");
-    // const data = await res.json();
-    // setWord(data.word);
+  const refresh = () => {
+    const r = GOLDEN_WORDS[Math.floor(Math.random() * GOLDEN_WORDS.length)];
+    setWord(r);
+    // later: fetch("/api/golden-word") → setWord(data.word)
   };
 
   return (
-    <div
-      className={[
-        "flex items-start gap-3",
-        "bg-neutral-950/55 border border-amber-400/20 rounded-2xl",
-        "px-4 py-3",
-        "shadow-[0_0_18px_-6px_rgba(255,200,0,0.35)]",
-        "backdrop-blur-sm",
-        "transition-all duration-500",
-        "min-h-[72px] max-w-[360px]",
-      ].join(" ")}
-    >
+    <div className="flex items-start gap-3 bg-neutral-950/55 border border-amber-400/20 rounded-2xl px-4 py-3 shadow-[0_0_18px_-6px_rgba(255,200,0,0.35)] backdrop-blur-sm transition-all duration-500 min-h-[72px] max-w-[360px]">
       <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-amber-400/20 border border-amber-300/40">
-        <Sparkles className="h-4 w-4 text-amber-200" />
+        <Sparkles className="h-4 w-4 text-amber-100" />
       </div>
       <div className="flex-1">
         <div className="text-[11px] uppercase tracking-[0.25em] text-amber-200/70 mb-1">
