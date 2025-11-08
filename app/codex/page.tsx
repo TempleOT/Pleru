@@ -572,7 +572,9 @@ const ELEMENTS = [
   },
 ] as const;
 
-// UI shells
+// ───────────────────────────────────────────────────────────────
+// Animated section shell
+// ───────────────────────────────────────────────────────────────
 const SectionShell: React.FC<{
   title: React.ReactNode;
   subtitle?: React.ReactNode;
@@ -580,27 +582,52 @@ const SectionShell: React.FC<{
   open: boolean;
   onToggle: () => void;
 }> = ({ title, subtitle, children, open, onToggle }) => {
+  // we use a big maxHeight to let large codex tiers expand
+  const MAX_HEIGHT = "3800px";
+
   return (
-    <section className="rounded-2xl border border-neutral-800/70 bg-neutral-950/80 backdrop-blur-sm shadow-2xl transition-colors">
+    <section
+      className={[
+        "rounded-2xl border bg-neutral-950/80 backdrop-blur-sm shadow-2xl transition-colors duration-200",
+        open ? "border-amber-400/35" : "border-neutral-800/70",
+      ].join(" ")}
+    >
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between gap-4 px-4 sm:px-5 py-4 hover:border-neutral-700/70"
+        className="w-full flex items-center justify-between gap-4 px-4 sm:px-5 py-4"
       >
         <div className="flex-1 flex flex-col text-left leading-snug max-w-[92%]">
           <div className="text-amber-300 font-semibold tracking-wide">{title}</div>
           {subtitle ? <div className="mt-0.5 text-sm text-neutral-400">{subtitle}</div> : null}
         </div>
-        <div className="shrink-0 text-neutral-500">
-          {open ? <Minus className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+        <div
+          className={[
+            "shrink-0 text-neutral-400 rounded-full border border-neutral-700/60 bg-neutral-950/40 p-1 transition-transform duration-200",
+            open ? "rotate-90" : "",
+          ].join(" ")}
+        >
+          {open ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
         </div>
       </button>
+
+      {/* collapsible body */}
       <div
+        style={{
+          maxHeight: open ? MAX_HEIGHT : "0px",
+        }}
         className={[
-          "grid transition-all duration-200",
-          open ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1 hidden",
+          "overflow-hidden transition-[max-height] duration-300 ease-out",
+          open ? "opacity-100" : "opacity-0",
         ].join(" ")}
       >
-        <div className="px-4 sm:px-5 pb-5 pt-0">{children}</div>
+        <div
+          className={[
+            "px-4 sm:px-5 pb-5 pt-0 transition-all duration-200",
+            open ? "translate-y-0" : "-translate-y-1",
+          ].join(" ")}
+        >
+          {children}
+        </div>
       </div>
     </section>
   );
