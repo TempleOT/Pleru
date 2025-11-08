@@ -1,5 +1,5 @@
 "use client";
-import type { Blueprint, BlueprintInput } from "@/types/blueprint";
+
 import Shell from "@/components/Shell";
 import Image from "next/image";
 import Link from "next/link";
@@ -22,8 +22,8 @@ const GOLDEN_WORDS = [
 function GoldenWord() {
   const [word, setWord] = useState("");
 
+  // pick one per day so it's stable
   useEffect(() => {
-    // stable per day
     const day = new Date().getDate();
     const idx = day % GOLDEN_WORDS.length;
     setWord(GOLDEN_WORDS[idx]);
@@ -32,12 +32,13 @@ function GoldenWord() {
   const refresh = () => {
     const r = GOLDEN_WORDS[Math.floor(Math.random() * GOLDEN_WORDS.length)];
     setWord(r);
-    // later: fetch("/api/golden-word") → setWord(data.word)
+    // later: fetch("/api/golden-word").then(...) to use Ollama
   };
 
   return (
-    <div className="flex items-start gap-3 bg-neutral-950/55 border border-amber-400/20 rounded-2xl px-4 py-3 shadow-[0_0_18px_-6px_rgba(255,200,0,0.35)] backdrop-blur-sm transition-all duration-500 min-h-[72px] max-w-[360px]">
+    <div className="flex items-start gap-3 bg-neutral-950/55 border border-amber-400/20 rounded-2xl px-4 py-3 shadow-[0_0_18px_-6px_rgba(255,200,0,0.35)] backdrop-blur-sm transition-all duration-500 min-h-[72px] w-full md:max-w-[360px]">
       <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-amber-400/20 border border-amber-300/40">
+        {/* little radiance icon */}
         <svg
           viewBox="0 0 24 24"
           className="h-4 w-4 text-amber-200"
@@ -61,7 +62,6 @@ function GoldenWord() {
         className="mt-1 rounded-full p-1 hover:bg-amber-200/5 text-amber-200/70 transition"
         aria-label="New golden word"
       >
-        {/* simple refresh icon */}
         <svg
           viewBox="0 0 24 24"
           className="h-4 w-4"
@@ -78,7 +78,7 @@ function GoldenWord() {
 }
 
 export default function Page() {
-  // ─── State ────────────────────────────────────────────
+  // ─── State (kept from your original) ─────────────────────────
   const [form, setForm] = useState({
     year: 1999,
     month: 5,
@@ -93,7 +93,6 @@ export default function Page() {
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState<{ compute?: boolean; interpret?: boolean }>({});
 
-  // ─── Helpers ────────────────────────────────────────────
   const setNum = (k: keyof typeof form) => (e: any) =>
     setForm((f) => ({ ...f, [k]: Number(e.target.value) }));
 
@@ -137,7 +136,6 @@ export default function Page() {
     }
   }
 
-  // ─── UI ────────────────────────────────────────────────
   return (
     <Shell>
       <div className="max-w-5xl mx-auto px-4 lg:px-0">
